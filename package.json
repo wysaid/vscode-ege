@@ -1,0 +1,99 @@
+{
+	"name": "ege",
+	"displayName": "ege",
+	"description": "Auto configuration for ege (https://xege.org)",
+	"version": "0.0.1",
+	"icon": "images/logo.png",
+	"publisher": "wysaid",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/wysaid/vscode-ege"
+	},
+	"homepage": "https://github.com/wysaid/vscode-ege",
+	"engines": {
+		"vscode": "^1.61.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:ege.setup-project",
+		"onCommand:ege.setup-global"
+	],
+	"main": "./src/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "ege.setup-project",
+				"title": "ege: setup with current project"
+			},
+			{
+				"command": "ege.setup-global",
+				"title": "ege: setup in global scope"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "ege configuration",
+			"properties": {
+				"ege.update_url": {
+					"type": "string",
+					"description": "An url to get latest version of EGE (default: https://xege.org/get-latest-version)",
+					"scope": "resource"
+				},
+				"ege.showEditorContextMenu": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show 'ege' in editor context menu",
+					"scope": "resource"
+				},
+				"ege.explorerContextMenu": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show 'ege' in explorer context menu",
+					"scope": "resource"
+				}
+			}
+		},
+		"keybindings": [],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "ege.setup-project",
+					"when": "!inOutput && config.ege.showEditorContextMenu",
+					"group": "1_modification"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "ege.setup-project",
+					"when": "config.ege.explorerContextMenu",
+					"group": "1_modification"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"pretest": "npm run lint",
+		"test": "node ./test/runTest.js"
+	},
+	"commands": {
+		"file": "echo ${file}",
+		"fileDirname": "echo ${fileDirname}"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.4",
+		"@types/mocha": "^9.0.0",
+		"@types/node": "14.x",
+		"@types/vscode": "^1.61.0",
+		"@vscode/test-electron": "^1.6.2",
+		"eslint": "^8.0.0",
+		"glob": "^7.2.0",
+		"mocha": "^9.1.1",
+		"typescript": "^4.4.3"
+	},
+	"dependencies": {
+		"fs-extra": "^10.0.0"
+	}
+}

@@ -24,3 +24,16 @@ You can define some options like below:
 }
 ```
 
+## MileStone
+
+- Install:
+  - Support ege downloading & install.
+
+- Compiler:
+  - Support vs2019 and later
+  - Support MingW + GCC
+
+- Solution:
+  - Support single file compile & run
+  - Support `Visual Studio` template generation.
+  - Support CMake template generation.

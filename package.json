@@ -92,8 +92,5 @@
 		"glob": "^7.2.0",
 		"mocha": "^9.1.1",
 		"typescript": "^4.4.3"
-	},
-	"dependencies": {
-		"fs-extra": "^10.0.0"
 	}
 }

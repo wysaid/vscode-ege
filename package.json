@@ -38,7 +38,7 @@
 			"properties": {
 				"ege.update_url": {
 					"type": "string",
-					"description": "An url to get latest version of EGE (default: https://xege.org/get-latest-version)",
+					"description": "An url to get latest version of EGE (default: https://xege.org/download/ege-latest-version)",
 					"scope": "resource"
 				},
 				"ege.showEditorContextMenu": {

@@ -32,6 +32,10 @@ module.exports = class {
         this.msgPrefix = `[${msgPrefix}]: `;
         const localThis = this;
 
+        if (this.progressInstance) {
+            this.cancel();
+        }
+
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: this.title,
@@ -54,6 +58,12 @@ module.exports = class {
                 localThis.progressReject = reject;
                 localThis.progressDurationTimeInMs = 0;
                 localThis.intervalHandle = setInterval(() => {
+
+                    if (!localThis.progressInstance || !localThis.progressToken || localThis.progressToken.isCancellationRequested) {
+                        localThis.cancel();
+                        return;
+                    }
+
                     localThis.progressDurationTimeInMs += 500;
                     if (localThis.progressDurationTimeInMs > localThis.progressTimeoutValue) {
                         localThis.onError(msgPrefix + "request time out");
@@ -78,6 +88,16 @@ module.exports = class {
             });
 
             return p;
+        }).then(() => {
+            if (this.intervalHandle) {
+                this.cancel();
+            }
+
+            this.progressInstance = null;
+            this.progressToken = null;
+        }, (reason) => {
+            console.log(this.msgPrefix + " Killing request.");
+            vscode.window.showErrorMessage(this.msgPrefix + "process cancelled! Reason: " + reason);
         });
     }
 
@@ -86,12 +106,15 @@ module.exports = class {
             clearInterval(this.intervalHandle);
             this.intervalHandle = null;
         }
+        this.progressToken = null;
+        this.progressInstance = null;
     }
 
-    cancel() {
+    cancel(reason) {
         if (this.progressReject) {
-            this.progressReject();
+            this.progressReject(reason);
             this.progressReject = null;
+            this.progressResolve = null;
         }
 
         this.clearProgressInterval();
@@ -101,20 +124,19 @@ module.exports = class {
         if (this.progressResolve) {
             this.progressResolve();
             this.progressResolve = null;
+            this.progressReject = null;
         }
 
         this.clearProgressInterval();
     }
 
     onCancellationRequested() {
-        console.log(this.msgPrefix + " Killing request.");
-        vscode.window.showErrorMessage(this.msgPrefix + "process cancelled!");
+
         this.cancel();
         this.clearProgressInterval();
     }
 
     onError(msg) {
-        this.cancel();
-        vscode.window.showErrorMessage(this.msgPrefix + "process failed: " + msg);
+        this.cancel(msg);
     }
 }

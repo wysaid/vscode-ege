@@ -17,7 +17,7 @@ You can define some options like below:
 
 ```jsonc
 {
-    /// The url to get latest version of EGE (default: https://xege.org/get-latest-version)
+    /// The url to get latest version of EGE (default: https://xege.org/download/ege-latest-version)
     "ege.update_url": "", 
     "ege.showEditorContextMenu": true, // Show 'ege' in editor context menu
     "ege.explorerContextMenu": true, // Show 'ege' in explorer context menu

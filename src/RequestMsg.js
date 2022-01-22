@@ -10,7 +10,7 @@ const vscode = require('vscode');
 const LONG_REQUEST_TIMEOUT_VALUE = 60000;
 
 /// 执行一个长请求 (比如请求网络)
-module.exports = class {
+class RequestMsg {
     title = "";
     msgPrefix = "";
     intervalHandle = null;
@@ -27,10 +27,14 @@ module.exports = class {
     constructor() {
     }
 
+    /**
+     * 
+     * @param {string} title 
+     * @param {string} msgPrefix 
+     */
     start(title, msgPrefix) {
         this.title = title;
         this.msgPrefix = `[${msgPrefix}]: `;
-        const localThis = this;
 
         if (this.progressInstance) {
             this.cancel();
@@ -41,50 +45,50 @@ module.exports = class {
             title: this.title,
             cancellable: true,
         }, async (progress, token) => {
-            localThis.progressInstance = progress;
-            localThis.progressToken = token;
-            token.onCancellationRequested(localThis.onCancellationRequested.bind(localThis));
+            this.progressInstance = progress;
+            this.progressToken = token;
+            token.onCancellationRequested(this.onCancellationRequested.bind(this));
             progress.report({ increment: 1, message: msgPrefix + "start!" });
 
-            if (localThis.intervalHandle) {
-                console.error(msgPrefix + "intervalHandle = " + localThis.intervalHandle);
+            if (this.intervalHandle) {
+                console.error(msgPrefix + "intervalHandle = " + this.intervalHandle);
                 vscode.window.showErrorMessage(msgPrefix + "Last job not finished, try to stop it...\n");
-                clearInterval(localThis.intervalHandle);
-                localThis.intervalHandle = null;
+                clearInterval(this.intervalHandle);
+                this.intervalHandle = null;
             }
 
             const p = new Promise((resolve, reject) => {
-                localThis.progressResolve = resolve;
-                localThis.progressReject = reject;
-                localThis.progressDurationTimeInMs = 0;
-                localThis.intervalHandle = setInterval(() => {
+                this.progressResolve = resolve;
+                this.progressReject = reject;
+                this.progressDurationTimeInMs = 0;
+                this.intervalHandle = setInterval(() => {
 
-                    if (!localThis.progressInstance || !localThis.progressToken || localThis.progressToken.isCancellationRequested) {
-                        localThis.cancel();
+                    if (!this.progressInstance || !this.progressToken || this.progressToken.isCancellationRequested) {
+                        this.cancel();
                         return;
                     }
 
-                    localThis.progressDurationTimeInMs += 500;
-                    if (localThis.progressDurationTimeInMs > localThis.progressTimeoutValue) {
-                        localThis.onError(msgPrefix + "request time out");
+                    this.progressDurationTimeInMs += 500;
+                    if (this.progressDurationTimeInMs > this.progressTimeoutValue) {
+                        this.onError(msgPrefix + "request time out");
                         return;
                     }
 
-                    if (localThis.progressPercentTo < 99) {
-                        let increment = localThis.progressPercentTo - localThis.progressPercent;
-                        if (increment === 0 && localThis.progressPercentTo < 50) {
+                    if (this.progressPercentTo < 99) {
+                        let increment = this.progressPercentTo - this.progressPercent;
+                        if (increment === 0 && this.progressPercentTo < 50) {
                             /// 默认更新一下, 防止认为任务死掉了
                             increment = 1;
                         }
-                        localThis.progressPercentTo += increment;
-                        localThis.progressPercent = localThis.progressPercentTo;
-                        progress.report({ increment: increment, message: localThis.showingMessage });
-                        console.log("Progress update - " + localThis.showingMessage + " " + localThis.progressPercent);
-                        console.log("Taking time: " + localThis.progressDurationTimeInMs);
+                        this.progressPercentTo += increment;
+                        this.progressPercent = this.progressPercentTo;
+                        progress.report({ increment: increment, message: this.showingMessage });
+                        console.log("Progress update - " + this.showingMessage + " " + this.progressPercent);
+                        console.log("Taking time: " + this.progressDurationTimeInMs);
                     }
                 }, 500);
 
-                console.error("intervalHandle = " + localThis.intervalHandle);
+                console.log("intervalHandle = " + this.intervalHandle);
             });
 
             return p;
@@ -136,7 +140,12 @@ module.exports = class {
         this.clearProgressInterval();
     }
 
+    /**
+     * @param {string} msg 
+     */
     onError(msg) {
         this.cancel(msg);
     }
 }
+
+module.exports = RequestMsg;

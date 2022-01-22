@@ -5,14 +5,9 @@
 'use strict';
 
 const vscode = require('vscode');
-// const fs = require('fs-extra');
-// const path = require('path');
+const EGE = require('./ege')
 
-const Msg = require('./SimpleMsg')
-const RequestMsg = require('./RequestMsg');
-
-const msgHandle = new Msg("ege");
-let reqMsg = null;
+let egeHandle = null;
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -23,27 +18,34 @@ function activate(context) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "ege" is now active!');
 
+	egeHandle = new EGE(context);
+
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setup-project', () => {
-		// vscode.window.showInformationMessage("ege: setup-project!!\n");
-		msgHandle.showInfo("ege: setup-project!!\n");
+		vscode.window.showInformationMessage("ege: setup-project!!\n");
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setup-global', () => {
-		// vscode.window.showInformationMessage("ege: setup-global!!\n");
+		vscode.window.showInformationMessage("ege: setup-global!!\n");
 
-		if (!reqMsg) {
-			reqMsg = new RequestMsg();
-			reqMsg.start("ege: setup-global!!\n", "ege");
-		} else {
-			reqMsg.cancel();
-			reqMsg = null;
-		}
+		egeHandle.performInstall();
+
+		// if (!progressHandle) {
+
+		// 	progressHandle.start("ege: setup-global!!\n", "ege");
+		// } else {
+		// 	progressHandle.cancel();
+		// 	progressHandle = null;
+		// }
 	}));
 }
 
 // this method is called when your extension is deactivated
 function deactivate() {
 	/// cleanup
+	if (egeHandle) {
+		egeHandle.cleanup();
+		egeHandle = null;
+	}
 }
 
 module.exports = {

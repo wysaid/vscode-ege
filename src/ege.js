@@ -60,27 +60,49 @@ module.exports = class {
         this.egeTempDir = path.join(os.tmpdir(), this.pluginContext.extension.id);
         console.log("The ege plugin storage path is: " + this.egeTempDir);
         this.egeDownloadDir = path.join(this.egeTempDir, "Download");
+        this.egeInstallerDir = path.join(this.egeTempDir, "Install");
 
         return true;
     }
 
     performInstall() {
 
+        if (fs.existsSync(this.egeInstallerDir)) {
+            vscode.window.showInputBox({
+                title: "ege: Existing installation detected, input 'yes' to perform cleanup and continue?",
+                value: "yes"
+            }).then(value => {
+                if (value === 'yes') {
+                    console.log("Perform cleanup...");
+                    this.clearPluginCache();
+                    if (!fs.existsSync(this.egeInstallerDir)) {
+                        // retry.
+                        this.performInstall();
+                    } else {
+                        /// Cleanup failed?
+                        vscode.window.showErrorMessage("ege: Unexpected error: Perform cleanup failed.");
+                    }
+                } else {
+                    vscode.window.showInformationMessage('ege: Installation cancelled!');
+                }
+            });
+            return;
+        }
+
         if (!fs.pathExistsSync(this.egeDownloadDir)) {
-            fs.mkdirSync(this.egeDownloadDir);
+            fs.mkdirpSync(this.egeDownloadDir);
         }
 
         if (!fs.existsSync) {
-            vscode.window.showErrorMessage("Create tmp directory failed!\n");
+            vscode.window.showErrorMessage("ege: Create tmp directory failed!\n");
             return false;
         }
 
         /// Check for the latest version.
         this.checkExistingDownload((exists) => {
             if (!exists) {
-
                 if (!this.egeDownloadedZipFile) {
-                    vscode.window.showErrorMessage("Get latest ege version failed! Make sure you're online!");
+                    vscode.window.showErrorMessage("ege: Get latest ege version failed! Make sure you're online!");
                     return;
                 }
 
@@ -93,6 +115,7 @@ module.exports = class {
                             if (err) {
                                 console.error("Error unzipping: " + err);
                                 vscode.window.showErrorMessage(`ege: unzip ${this.egeDownloadedZipFile} failed!`);
+                                fs.removeSync(this.egeInstallerDir);
                             }
                         });
                     }
@@ -139,14 +162,12 @@ module.exports = class {
             onComplete(err);
         });
 
-        const extractDir = this.egeTempDir + '/Install';
-
-        if (!fs.pathExistsSync(extractDir)) {
-            fs.mkdirSync(extractDir);
+        if (!fs.pathExistsSync(this.egeInstallerDir)) {
+            fs.mkdirpSync(this.egeInstallerDir);
         }
 
         unzip.extract({
-            path: extractDir
+            path: this.egeInstallerDir
         });
     }
 
@@ -158,11 +179,8 @@ module.exports = class {
     clearPluginCache() {
         /// remove caches.
         if (this.egeTempDir && this.egeTempDir.length !== 0 && fs.pathExistsSync(this.egeTempDir)) {
-            this.progressHandle.start();
-            setTimeout(() => {
-                fs.removeSync(this.egeTempDir);
-                vscode.window.showInfoMessage("Cleanup ege plugin cache - Done!");
-            }, 1);
+            fs.removeSync(this.egeTempDir);
+            vscode.window.showInformationMessage("ege: Cleanup ege plugin cache - Done!");
         }
     }
 
@@ -183,7 +201,7 @@ module.exports = class {
             if (fileToSave && fileToSave.length != 0 && fs.existsSync(fileToSave)) {
                 /// File must be writable if exists.
                 if (!fs.accessSync(fileToSave, fs.constants.W_OK)) {
-                    vscode.window.showErrorMessage(`File ${fileToSave} already exists and cannot be overwrite!`);
+                    vscode.window.showErrorMessage(`ege: File ${fileToSave} already exists and cannot be overwrite!`);
                     return null;
                 }
             }

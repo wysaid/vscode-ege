@@ -22,19 +22,28 @@ class RequestMsg {
     progressResolve = null;
     progressDurationTimeInMs = 0;
     progressTimeoutValue = LONG_REQUEST_TIMEOUT_VALUE;
-    showingMessage = "request";
+    showingMessage = "";
 
-    constructor() {
-    }
+    cancelCallback = null;
 
     /**
      * 
      * @param {string} title 
      * @param {string} msgPrefix 
      */
-    start(title, msgPrefix) {
+    constructor(title, msgPrefix) {
         this.title = title;
         this.msgPrefix = `[${msgPrefix}]: `;
+    }
+
+    /**
+     * @param {function} cancelCallback 
+     */
+    start(showingMessage, cancelCallback) {
+
+        this.showingMessage = showingMessage;
+        this.cancelCallback = cancelCallback;
+        const msgPrefix = this.msgPrefix;
 
         if (this.progressInstance) {
             this.cancel();
@@ -105,6 +114,20 @@ class RequestMsg {
         });
     }
 
+    /**
+     * @param {string} msg 
+     */
+    updateProgress(msg) {
+        if (this.progressPercentTo < 95) {
+            if (this.progressPercentTo < 70) {
+                this.progressPercentTo += 15;
+            } else {
+                this.progressPercentTo += 5;
+            }
+        }
+        this.showingMessage = msg;
+    }
+
     clearProgressInterval() {
         if (this.intervalHandle) {
             clearInterval(this.intervalHandle);
@@ -135,7 +158,9 @@ class RequestMsg {
     }
 
     onCancellationRequested() {
-
+        if (this.cancelCallback) {
+            this.cancelCallback();
+        }
         this.cancel();
         this.clearProgressInterval();
     }
@@ -144,6 +169,9 @@ class RequestMsg {
      * @param {string} msg 
      */
     onError(msg) {
+        if (this.cancelCallback) {
+            this.cancelCallback();
+        }
         this.cancel(msg);
     }
 }

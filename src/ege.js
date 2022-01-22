@@ -13,7 +13,6 @@ const fs = require('fs-extra');
 const os = require('os');
 const Unzipper = require('decompress-zip');
 
-const Msg = require('./SimpleMsg')
 const RequestMsg = require('./RequestMsg');
 
 
@@ -32,14 +31,11 @@ module.exports = class {
     egeInstallerDir = null;
 
     /**
-     * @type {SimpleMsg} context
-     */
-    msgHandle = null;
-
-    /**
      * @type {RequestMsg} context
      */
     progressHandle = null;
+
+    installationCancelled = false;
 
     /**
      * @param {vscode.ExtensionContext} context
@@ -47,12 +43,6 @@ module.exports = class {
     constructor(context) {
         //@type {vscode.ExtensionContext}
         this.pluginContext = context;
-
-        //@type {SimpleMsg}
-        this.msgHandle = new Msg('ege');
-
-        //@type {RequestMsg}
-        this.progressHandle = new RequestMsg();
         this.setupContext();
     }
 
@@ -89,6 +79,11 @@ module.exports = class {
             return;
         }
 
+        if (this.progressHandle && this.progressHandle.progressInstance) {
+            vscode.window.showErrorMessage("ege: last progress not finished! Waiting... You can reload this window if you're waiting too long.");
+            return;
+        }
+
         if (!fs.pathExistsSync(this.egeDownloadDir)) {
             fs.mkdirpSync(this.egeDownloadDir);
         }
@@ -98,6 +93,16 @@ module.exports = class {
             return false;
         }
 
+        this.progressHandle = new RequestMsg('Install EGE', 'ege');
+        this.installationCancelled = false;
+        this.progressHandle.start("Fetching latest ege version...", async () => {
+            /// Cancelled by user.
+            this.installationCancelled = true;
+            setTimeout(() => {
+                this.progressHandle = null;
+            }, 1);
+        });
+
         /// Check for the latest version.
         this.checkExistingDownload((exists) => {
             if (!exists) {
@@ -106,16 +111,20 @@ module.exports = class {
                     return;
                 }
 
+                this.progressHandle.updateProgress("Downloading " + this.egeDownloadUrl);
                 this.performDownload((err) => {
                     if (err) {
                         console.error("Error downloading: " + err);
                         vscode.window.showErrorMessage("ege: download ege zip failed!!");
                     } else {
+                        this.progressHandle.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
                         this.performUnzip((err) => {
                             if (err) {
                                 console.error("Error unzipping: " + err);
                                 vscode.window.showErrorMessage(`ege: unzip ${this.egeDownloadedZipFile} failed!`);
                                 fs.removeSync(this.egeInstallerDir);
+                            } else {
+                                this.progressHandle.resolve();
                             }
                         });
                     }
@@ -181,6 +190,11 @@ module.exports = class {
         if (this.egeTempDir && this.egeTempDir.length !== 0 && fs.pathExistsSync(this.egeTempDir)) {
             fs.removeSync(this.egeTempDir);
             vscode.window.showInformationMessage("ege: Cleanup ege plugin cache - Done!");
+        }
+
+        if (this.progressHandle) {
+            this.progressHandle.cancel();
+            this.progressHandle = null;
         }
     }
 
@@ -258,8 +272,6 @@ module.exports = class {
             this.progressHandle.cancel();
             this.progressHandle = null;
         }
-
-        this.msgHandle = null;
     }
 }
 

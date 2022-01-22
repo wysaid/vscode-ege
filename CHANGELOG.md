@@ -7,7 +7,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## 0.0.2
 
-- Draft: support ege installers downloading & unzipping.
+- Draft: 
+  - Support ege installers downloading & unzipping.
+  - Support cache manage.
 
 ## 0.0.1
 

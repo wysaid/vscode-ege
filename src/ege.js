@@ -15,8 +15,7 @@ const Unzipper = require('decompress-zip');
 
 const RequestMsg = require('./RequestMsg');
 
-
-module.exports = class {
+class EGE {
 
     /**
      * @type {vscode.ExtensionContext} context
@@ -124,6 +123,7 @@ module.exports = class {
                                 vscode.window.showErrorMessage(`ege: unzip ${this.egeDownloadedZipFile} failed!`);
                                 fs.removeSync(this.egeInstallerDir);
                             } else {
+                                vscode.window.showInformationMessage("ege: Done unzipping at " + this.egeDownloadDir);
                                 this.progressHandle.resolve();
                             }
                         });
@@ -275,3 +275,4 @@ module.exports = class {
     }
 }
 
+module.exports = EGE;

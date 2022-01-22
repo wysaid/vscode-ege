@@ -18,7 +18,9 @@
 	],
 	"activationEvents": [
 		"onCommand:ege.setup-project",
-		"onCommand:ege.setup-global"
+		"onCommand:ege.setup-global",
+		"onCommand:ege.cleanup-caches",
+		"onCommand:ege.open-cache-dir"
 	],
 	"main": "./src/extension.js",
 	"contributes": {
@@ -30,6 +32,14 @@
 			{
 				"command": "ege.setup-global",
 				"title": "ege: setup in global scope"
+			},
+			{
+				"command": "ege.cleanup-caches",
+				"title": "ege: cleanup caches"
+			},
+			{
+				"command": "ege.open-cache-dir",
+				"title": "ege: open cache dir"
 			}
 		],
 		"configuration": {

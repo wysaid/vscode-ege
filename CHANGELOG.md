@@ -5,6 +5,11 @@ All notable changes to the "ege" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 
+## 0.0.3
+
+- Beta:
+  - Support installation of `VS2015/VS2017/VS2019/VS2022`
+
 ## 0.0.2
 
 - Draft: 

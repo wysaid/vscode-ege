@@ -11,6 +11,11 @@ const fs = require('fs-extra');
 const EGE = require('./ege');
 
 /**
+ * @type {EGEUtils}
+ */
+const utils = require('./utils')
+
+/**
  * @type {EGE}
  */
 let egeHandle = null;
@@ -41,24 +46,7 @@ function activate(context) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.open-cache-dir', () => {
 		if (egeHandle.egeInstallerDir && fs.existsSync(egeHandle.egeInstallerDir)) {
-			const osName = os.platform();
-			let openExplorerCommand = null;
-			if (osName === 'win32' || osName === 'cygwin') { /// win
-				openExplorerCommand = `explorer.exe "${egeHandle.egeInstallerDir}"`;
-			} else if (osName === 'darwin') { /// mac
-				openExplorerCommand = `open "${egeHandle.egeInstallerDir}"`;
-			} else if (osName === 'linux') {
-				openExplorerCommand = `xdg-open "${egeHandle.egeInstallerDir}"`;
-			} else {
-				vscode.window.showErrorMessage(`ege: open cache dir is not supported on ${egeHandle.egeInstallerDir}`);
-			}
-
-			if (openExplorerCommand) {
-				cp.exec(openExplorerCommand, (err) => {
-					if (err)
-						vscode.window.showInformationMessage(`ege: open cache dir ${egeHandle.egeInstallerDir} failed: ${err}`)
-				});
-			}
+			utils.openDirectoryInFileExplorer(egeHandle.egeInstallerDir);
 		} else {
 			vscode.window.showErrorMessage(`ege: Cache dir ${egeHandle.egeInstallerDir} does not exist.`)
 		}

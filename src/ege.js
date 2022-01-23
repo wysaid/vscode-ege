@@ -232,6 +232,9 @@ class EGE {
     performCompilerInstallation() {
         if (this.compilers) {
             vscode.window.showErrorMessage("Last installation not finished!");
+            setTimeout(() => {
+                this.compilers = null;
+            }, 1000);
             return;
         }
 
@@ -240,7 +243,7 @@ class EGE {
         if (p) {
             p.then(value => {
                 if (value) {
-                    this.compilers.performInstall(value, () => {
+                    this.compilers.performInstall(value, this.egeInstallerDir, () => {
                         vscode.window.showInformationMessage("ege: install finished!");
                         this.compilers = null;
                     });

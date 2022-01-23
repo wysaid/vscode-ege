@@ -28,12 +28,14 @@ class EGE {
     egeDownloadedZipFile = null;
     egeLatestVersion = null;
     egeInstallerDir = null;
+    egeIncludeDir = null;
+    egeLibsDir = null;
+    egeDemoDir = null;
 
     /**
      * @type {RequestMsg} context
      */
     progressHandle = null;
-
     installationCancelled = false;
 
     /**
@@ -50,6 +52,9 @@ class EGE {
         console.log("The ege plugin storage path is: " + this.egeTempDir);
         this.egeDownloadDir = path.join(this.egeTempDir, "Download");
         this.egeInstallerDir = path.join(this.egeTempDir, "Install");
+        this.egeIncludeDir = path.join(this.egeInstallerDir, "include");
+        this.egeLibsDir = path.join(this.egeInstallerDir, "lib");
+        this.egeDemoDir = path.join(this.egeInstallerDir, "demo");
 
         return true;
     }
@@ -57,24 +62,73 @@ class EGE {
     performInstall() {
 
         if (fs.existsSync(this.egeInstallerDir)) {
-            vscode.window.showInputBox({
-                title: "ege: Existing installation detected, input 'yes' to perform cleanup and continue?",
-                value: "yes"
+
+            const quickPicks = [
+                {
+                    label: "Cleanup Downloads(Redo Download)",
+                    description: "清除现有下载项, 重新下载",
+                    picked: false
+
+                },
+                {
+                    label: "Cleanup Installation(Redo Install)",
+                    description: "清除现有安装, 重新安装",
+                    picked: true
+                }];
+            vscode.window.showQuickPick(quickPicks, {
+                title: "ege: Existing installation detected, choose actions you want",
+                canPickMany: true
             }).then(value => {
-                if (value === 'yes') {
-                    console.log("Perform cleanup...");
-                    this.clearPluginCache();
-                    if (!fs.existsSync(this.egeInstallerDir)) {
-                        // retry.
-                        this.performInstall();
+                if (value) {
+                    let removeDownload = false;
+                    let removeInstall = false;
+
+                    value.forEach(s => {
+                        if (s === quickPicks[0]) {
+                            removeDownload = true;
+                        } else if (s === quickPicks[1]) {
+                            removeInstall = true;
+                        }
+                    });
+
+                    if (removeDownload && this.removeInstall) {
+                        this.clearPluginCache();
                     } else {
-                        /// Cleanup failed?
-                        vscode.window.showErrorMessage("ege: Unexpected error: Perform cleanup failed.");
+                        if (removeDownload && fs.existsSync(this.egeDownloadDir)) {
+                            fs.removeSync(this.egeDownloadDir);
+                        }
+
+                        if (removeInstall && fs.existsSync(this.egeInstallerDir)) {
+                            fs.removeSync(this.egeInstallerDir);
+                        }
                     }
+
+                    this.performInstall();
                 } else {
-                    vscode.window.showInformationMessage('ege: Installation cancelled!');
+                    vscode.window.showInformationMessage("ege: install cancelled");
                 }
+            }, rejectReason => {
+                vscode.window.showInformationMessage("ege: install cancelled: " + rejectReason)
             });
+
+            // vscode.window.showInputBox({
+            //     title: "ege: Existing installation detected, input 'yes' to perform cleanup and continue?",
+            //     value: "yes"
+            // }).then(value => {
+            //     if (value === 'yes') {
+            //         console.log("Perform cleanup...");
+            //         this.clearPluginCache();
+            //         if (!fs.existsSync(this.egeInstallerDir)) {
+            //             // retry.
+            //             this.performInstall();
+            //         } else {
+            //             /// Cleanup failed?
+            //             vscode.window.showErrorMessage("ege: Unexpected error: Perform cleanup failed.");
+            //         }
+            //     } else {
+            //         vscode.window.showInformationMessage('ege: Installation cancelled!');
+            //     }
+            // });
             return;
         }
 
@@ -102,11 +156,27 @@ class EGE {
             }, 1);
         });
 
+        const nextStep = () => {
+            this.progressHandle.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
+            this.performUnzip((err) => {
+                if (err) {
+                    console.error("Error unzipping: " + err);
+                    vscode.window.showErrorMessage(`ege: unzip ${this.egeDownloadedZipFile} failed!`);
+                    fs.removeSync(this.egeInstallerDir);
+                    this.progressHandle.reject();
+                } else {
+                    vscode.window.showInformationMessage("ege: Done unzipping at " + this.egeDownloadDir);
+                    this.progressHandle.resolve();
+                }
+            });
+        };
+
         /// Check for the latest version.
         this.checkExistingDownload((exists) => {
             if (!exists) {
                 if (!this.egeDownloadedZipFile) {
                     vscode.window.showErrorMessage("ege: Get latest ege version failed! Make sure you're online!");
+                    this.progressHandle.reject();
                     return;
                 }
 
@@ -116,21 +186,12 @@ class EGE {
                         console.error("Error downloading: " + err);
                         vscode.window.showErrorMessage("ege: download ege zip failed!!");
                     } else {
-                        this.progressHandle.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
-                        this.performUnzip((err) => {
-                            if (err) {
-                                console.error("Error unzipping: " + err);
-                                vscode.window.showErrorMessage(`ege: unzip ${this.egeDownloadedZipFile} failed!`);
-                                fs.removeSync(this.egeInstallerDir);
-                            } else {
-                                vscode.window.showInformationMessage("ege: Done unzipping at " + this.egeDownloadDir);
-                                this.progressHandle.resolve();
-                            }
-                        });
+                        nextStep();
                     }
                 });
             } else {
-                vscode.window.showInformationMessage("EGE is already downloaded!");
+                vscode.window.showInformationMessage("EGE is already downloaded, skip downloading");
+                nextStep();
             }
         });
     }
@@ -159,10 +220,79 @@ class EGE {
         }
     }
 
+    cleanupInstallDir() {
+        if (fs.pathExistsSync(this.egeInstallerDir)) {
+            fs.removeSync(this.egeInstallerDir);
+        }
+    }
+
+    fixInstallDirContents() {
+        if (!fs.existsSync(this.egeInstallerDir)) {
+            return;
+        }
+
+        if (fs.existsSync(this.egeIncludeDir) && fs.existsSync(this.egeLibsDir)) {
+            const includeFiles = fs.readdirSync(this.egeIncludeDir);
+            const libsFiles = fs.readdirSync(this.egeLibsDir);
+            if (includeFiles.length != 0 && libsFiles.length != 0) {
+                /// no inner paths.
+                console.log("Skip path fix...");
+                return;
+            }
+        }
+
+        fs.removeSync(this.egeIncludeDir);
+        fs.removeSync(this.egeLibsDir);
+        fs.removeSync(this.egeDemoDir);
+
+        const installDirContents = fs.readdirSync(this.egeInstallerDir);
+        if (installDirContents.length === 0) {
+            vscode.window.showErrorMessage("ege: No content in the installation dir at: " + this.egeInstallerDir);
+            return;
+        }
+
+        let validInnerDir = null;
+        let validIncludeDir = null;
+        let validLibsDir = null;
+
+        /// find install dir.
+        installDirContents.forEach(file => {
+            console.log("ege: enum install dir content - " + file);
+            const newInstallDir = path.join(this.egeInstallerDir, file);
+            const newIncludeDir = path.join(newInstallDir, 'include');
+            const newlibsDir = path.join(newInstallDir, 'lib');
+            if (fs.existsSync(newIncludeDir) && fs.existsSync(newlibsDir)) {
+                if (!validInnerDir) { // pick first
+                    validInnerDir = newInstallDir;
+                    validIncludeDir = newIncludeDir;
+                    validLibsDir = newlibsDir;
+                } else {
+                    vscode.window.showErrorMessage("ege: multi installation dir found, pick the first: " + validInnerDir);
+                }
+            }
+        });
+
+        if (validInnerDir && validIncludeDir && validLibsDir) { /// perform moving...
+            fs.moveSync(validIncludeDir, this.egeIncludeDir);
+            fs.moveSync(validLibsDir, this.egeLibsDir);
+            let demoDir = path.join(validInnerDir, 'demo');
+            if (fs.existsSync(demoDir)) {
+                let demoSrcDir = path.join(demoDir, 'src');
+                if (fs.existsSync(demoSrcDir)) {
+                    demoDir = demoSrcDir;
+                }
+                fs.moveSync(demoDir, this.egeDemoDir);
+            }
+        }
+    }
+
     performUnzip(onComplete) {
         const unzip = new Unzipper(this.egeDownloadedZipFile);
         unzip.on('extract', () => {
             console.log("Finished unzipping...");
+
+            /// Check installation, remove inner dir.
+            this.fixInstallDirContents();
             onComplete();
         });
 
@@ -171,9 +301,9 @@ class EGE {
             onComplete(err);
         });
 
-        if (!fs.pathExistsSync(this.egeInstallerDir)) {
-            fs.mkdirpSync(this.egeInstallerDir);
-        }
+        this.cleanupInstallDir();
+
+        fs.mkdirpSync(this.egeInstallerDir);
 
         unzip.extract({
             path: this.egeInstallerDir

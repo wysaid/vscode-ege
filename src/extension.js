@@ -9,7 +9,6 @@ const os = require('os');
 const fs = require('fs-extra');
 
 const EGE = require('./ege');
-const { stderr } = require('process');
 
 /**
  * @type {EGE}

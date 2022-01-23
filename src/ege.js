@@ -169,7 +169,9 @@ class EGE {
                     console.error("Error unzipping: " + err);
                     vscode.window.showErrorMessage(`ege: unzip ${this.egeDownloadedZipFile} failed!`);
                     fs.removeSync(this.egeInstallerDir);
-                    this.progressHandle.reject();
+                    if (this.progressHandle) {
+                        this.progressHandle.reject();
+                    }
                 } else {
                     this.progressHandle.resolve();
                     vscode.window.showInformationMessage("ege: Installer prepared, please choose a compiler!");
@@ -234,20 +236,25 @@ class EGE {
         }
 
         this.compilers = new Compilers();
-        this.compilers.chooseCompilerByUser().then(value => {
-            if (value) {
-                this.compilers.performInstall(value, () => {
-                    vscode.window.showInformationMessage("ege: install finished!");
+        const p = this.compilers.chooseCompilerByUser();
+        if (p) {
+            p.then(value => {
+                if (value) {
+                    this.compilers.performInstall(value, () => {
+                        vscode.window.showInformationMessage("ege: install finished!");
+                        this.compilers = null;
+                    });
+                } else {
+                    vscode.window.showWarningMessage("ege: choosing compiler cancelled!");
                     this.compilers = null;
-                });
-            } else {
-                vscode.window.showWarningMessage("ege: choosing compiler cancelled!");
+                }
+            }, () => {
+                vscode.window.showWarningMessage("ege: no compiler choosed.");
                 this.compilers = null;
-            }
-        }, () => {
-            vscode.window.showWarningMessage("ege: no compiler choosed.");
+            });
+        } else {
             this.compilers = null;
-        });
+        }
     }
 
     cleanupInstallDir() {

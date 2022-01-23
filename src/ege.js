@@ -282,8 +282,6 @@ class EGE {
         }
 
         let validInnerDir = null;
-        let validIncludeDir = null;
-        let validLibsDir = null;
 
         /// find install dir.
         installDirContents.forEach(file => {
@@ -294,25 +292,32 @@ class EGE {
             if (fs.existsSync(newIncludeDir) && fs.existsSync(newlibsDir)) {
                 if (!validInnerDir) { // pick first
                     validInnerDir = newInstallDir;
-                    validIncludeDir = newIncludeDir;
-                    validLibsDir = newlibsDir;
                 } else {
                     vscode.window.showErrorMessage("ege: multi installation dir found, pick the first: " + validInnerDir);
                 }
             }
         });
 
-        if (validInnerDir && validIncludeDir && validLibsDir) { /// perform moving...
-            fs.moveSync(validIncludeDir, this.egeIncludeDir);
-            fs.moveSync(validLibsDir, this.egeLibsDir);
-            let demoDir = path.join(validInnerDir, 'demo');
-            if (fs.existsSync(demoDir)) {
-                let demoSrcDir = path.join(demoDir, 'src');
-                if (fs.existsSync(demoSrcDir)) {
-                    demoDir = demoSrcDir;
+        if (validInnerDir) {
+            const installInnerContents = fs.readdirSync(validInnerDir);
+
+            installInnerContents.forEach(file => { /// perform moving...
+                const newPath = path.join(this.egeInstallerDir, file);
+                if (!fs.existsSync(newPath)) {
+                    let srcPath = path.join(validInnerDir, file);
+
+                    if (file === 'demo') { /// fix demo dir
+                        const newDemoPath = path.join(srcPath, 'src');
+                        if (fs.existsSync(newDemoPath)) {
+                            srcPath = newDemoPath;
+                        }
+                    }
+
+                    fs.moveSync(srcPath, newPath);
                 }
-                fs.moveSync(demoDir, this.egeDemoDir);
-            }
+            });
+
+            fs.removeSync(validInnerDir);
         }
     }
 

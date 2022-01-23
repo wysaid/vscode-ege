@@ -57,7 +57,7 @@ function activate(context) {
 			if (openExplorerCommand) {
 				cp.exec(openExplorerCommand, (err) => {
 					if (err)
-						vscode.window.showErrorMessage(`ege: open cache dir ${egeHandle.egeInstallerDir} failed: ${err}`)
+						vscode.window.showInformationMessage(`ege: open cache dir ${egeHandle.egeInstallerDir} failed: ${err}`)
 				});
 			}
 		} else {

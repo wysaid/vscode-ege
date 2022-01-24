@@ -33,6 +33,10 @@ class EGE {
     egeLibsDir = null;
     egeDemoDir = null;
 
+    /// builtin bundles
+    egeBundleDir = null;
+    egeBundledZip = null;
+
     /**
      * @type {RequestMsg} context
      */
@@ -67,6 +71,13 @@ class EGE {
         this.egeDemoDir = path.join(this.egeInstallerDir, "demo");
 
         /// try to extract 
+        this.egeBundleDir = path.join(__dirname, "../bundle");
+        this.egeBundledZip = path.join(this.egeBundleDir, "ege_bundle.zip");
+        if (fs.existsSync(this.egeBundleDir) && fs.existsSync(this.egeBundledZip)) {
+            console.log("EGE: Find builtin bundle at: " + this.egeBundledZip);
+        } else {
+            vscode.window.showErrorMessage("EGE: builtin bundle not found at: " + this.egeBundledZip);
+        }
 
         return true;
     }
@@ -77,45 +88,31 @@ class EGE {
 
             const quickPicks = [
                 {
-                    label: "Cleanup Downloads(Redo Download)",
-                    description: "清除现有下载项, 重新下载",
-                    picked: false
-
+                    label: "Use builtin EGE(20.08)",
+                    description: "使用本插件内置的EGE(20.08)完成安装 (推荐)",
+                    picked: true
                 },
                 {
-                    label: "Cleanup Installation(Redo Install)",
-                    description: "清除现有安装, 重新安装",
-                    picked: true
+                    label: "Download the latest version from https://xege.org",
+                    description: "从官网下载最新版本并安装",
+                    picked: false
                 }];
             vscode.window.showQuickPick(quickPicks, {
                 title: "EGE: Existing installation detected, choose actions you want",
-                canPickMany: true
+                canPickMany: false
             }).then(value => {
                 if (value) {
-                    let removeDownload = false;
-                    let removeInstall = false;
+                    const index = quickPicks.indexOf(value);
 
-                    value.forEach(s => {
-                        if (s === quickPicks[0]) {
-                            removeDownload = true;
-                        } else if (s === quickPicks[1]) {
-                            removeInstall = true;
-                        }
-                    });
-
-                    if (removeDownload && this.removeInstall) {
+                    if (index >= 0) {
                         this.clearPluginCache();
+
+                        /// pass true to trigger download.
+                        this.performInstall(index === 1);
                     } else {
-                        if (removeDownload && fs.existsSync(this.egeDownloadDir)) {
-                            fs.removeSync(this.egeDownloadDir);
-                        }
-
-                        if (removeInstall && fs.existsSync(this.egeInstallerDir)) {
-                            fs.removeSync(this.egeInstallerDir);
-                        }
+                        console.log("EGE: PerformInstall cancelled");
+                        return;
                     }
-
-                    this.performInstall();
                 } else {
                     vscode.window.showInformationMessage("EGE: Install cancelled");
                 }
@@ -123,24 +120,6 @@ class EGE {
                 vscode.window.showInformationMessage("EGE: Install cancelled: " + rejectReason)
             });
 
-            // vscode.window.showInputBox({
-            //     title: "EGE: Existing installation detected, input 'yes' to perform cleanup and continue?",
-            //     value: "yes"
-            // }).then(value => {
-            //     if (value === 'yes') {
-            //         console.log("Perform cleanup...");
-            //         this.clearPluginCache();
-            //         if (!fs.existsSync(this.egeInstallerDir)) {
-            //             // retry.
-            //             this.performInstall();
-            //         } else {
-            //             /// Cleanup failed?
-            //             vscode.window.showErrorMessage("EGE: Unexpected error: Perform cleanup failed.");
-            //         }
-            //     } else {
-            //         vscode.window.showInformationMessage('EGE: Installation cancelled!');
-            //     }
-            // });
             return;
         }
 
@@ -186,29 +165,37 @@ class EGE {
             });
         };
 
-        /// Check for the latest version.
-        this.checkExistingDownload((exists) => {
-            if (!exists) {
-                if (!this.egeDownloadedZipFile) {
-                    vscode.window.showErrorMessage("EGE: Get latest ege version failed! Make sure you're online!");
-                    this.progressHandle.reject();
-                    return;
-                }
+        const needDownload = arguments.length > 0 && arguments[0];
 
-                this.progressHandle.updateProgress("Downloading " + this.egeDownloadUrl);
-                this.performDownload((err) => {
-                    if (err) {
-                        console.error("Error downloading: " + err);
-                        vscode.window.showErrorMessage("EGE: Download ege zip failed!!");
-                    } else {
-                        nextStep();
+        if (needDownload) {
+            /// Check for the latest version.
+            this.checkExistingDownload((exists) => {
+                if (!exists) {
+                    if (!this.egeDownloadedZipFile) {
+                        vscode.window.showErrorMessage("EGE: Get latest ege version failed! Make sure you're online!");
+                        this.progressHandle.reject();
+                        return;
                     }
-                });
-            } else {
-                vscode.window.showInformationMessage("EGE is already downloaded, skip downloading");
-                nextStep();
-            }
-        });
+
+                    this.progressHandle.updateProgress("Downloading " + this.egeDownloadUrl);
+                    this.performDownload((err) => {
+                        if (err) {
+                            console.error("Error downloading: " + err);
+                            vscode.window.showErrorMessage("EGE: Download ege zip failed!!");
+                        } else {
+                            nextStep();
+                        }
+                    });
+                } else {
+                    vscode.window.showInformationMessage("EGE is already downloaded, skip downloading");
+                    nextStep();
+                }
+            });
+        } else {
+            /// extract builtin bundle.
+            this.egeDownloadedZipFile = this.egeBundledZip;
+            nextStep();
+        }
     }
 
     checkExistingDownload(callback) {

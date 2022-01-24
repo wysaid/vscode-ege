@@ -205,8 +205,6 @@ class Compilers {
                     fs.copySync(this.installerIncludePath, tmpIncludeDir)
                     fs.copySync(this.installerLibsPath, tmpLibsDir);
                     this.performCopyByUser(easyCopyDir);
-
-                    // this.validateInstallation();
                 } else {
                     vscode.window.showErrorMessage(`EGE: Invalid dir ${this.installerIncludePath} or ${srcLibsDir}`);
                 }
@@ -256,38 +254,6 @@ pause
         }
 
         utils.openDirectoryInFileExplorer(packageDir);
-    }
-
-    validateInstallation() {
-        /// Check `graphics.h`
-        if (fs.existsSync(path.join(this.compilerIncludeDir, 'graphics.h') && fs.existsSync(path.join(this.compilerIncludeDir, 'ege.h')))) {
-            vscode.window.showInformationMessage("EGE: Finish installation, dst include dir: " + this.compilerIncludeDir);
-        } else {
-            vscode.window.showErrorMessage("EGE: Install failed! EGE Headers not found at: " + this.compilerIncludeDir);
-        }
-
-        const libsDirArray = [
-            'graphics.lib',
-            'amd64/graphics.lib',
-            'amd64/graphics.lib',
-            'x86/graphics.lib',
-            'x64/graphics.lib',
-        ];
-
-        let findedLibs = new Array();
-
-        libsDirArray.forEach(name => {
-            const libPath = path.join(this.installerLibsPath, name);
-            if (fs.existsSync(libPath)) {
-                findedLibs.push(libPath);
-            }
-        });
-
-        if (findedLibs.length !== 0) {
-            vscode.window.showInformationMessage("EGE: Finish installation, dst libs: " + findedLibs.join(';'));
-        } else {
-            vscode.window.showErrorMessage("EGE: Install failed! EGE libraries not found at: " + this.compilerIncludeDir);
-        }
     }
 
     reportNotSupported() {

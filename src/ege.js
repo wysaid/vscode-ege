@@ -53,6 +53,10 @@ class EGE {
         this.setupContext();
     }
 
+    validateBuiltinBundle() {
+
+    }
+
     setupContext() {
         this.egeTempDir = path.join(os.tmpdir(), this.pluginContext.extension.id);
         console.log("The ege plugin storage path is: " + this.egeTempDir);
@@ -61,6 +65,8 @@ class EGE {
         this.egeIncludeDir = path.join(this.egeInstallerDir, "include");
         this.egeLibsDir = path.join(this.egeInstallerDir, "lib");
         this.egeDemoDir = path.join(this.egeInstallerDir, "demo");
+
+        /// try to extract 
 
         return true;
     }
@@ -82,7 +88,7 @@ class EGE {
                     picked: true
                 }];
             vscode.window.showQuickPick(quickPicks, {
-                title: "ege: Existing installation detected, choose actions you want",
+                title: "EGE: Existing installation detected, choose actions you want",
                 canPickMany: true
             }).then(value => {
                 if (value) {
@@ -111,14 +117,14 @@ class EGE {
 
                     this.performInstall();
                 } else {
-                    vscode.window.showInformationMessage("ege: install cancelled");
+                    vscode.window.showInformationMessage("EGE: Install cancelled");
                 }
             }, rejectReason => {
-                vscode.window.showInformationMessage("ege: install cancelled: " + rejectReason)
+                vscode.window.showInformationMessage("EGE: Install cancelled: " + rejectReason)
             });
 
             // vscode.window.showInputBox({
-            //     title: "ege: Existing installation detected, input 'yes' to perform cleanup and continue?",
+            //     title: "EGE: Existing installation detected, input 'yes' to perform cleanup and continue?",
             //     value: "yes"
             // }).then(value => {
             //     if (value === 'yes') {
@@ -129,17 +135,17 @@ class EGE {
             //             this.performInstall();
             //         } else {
             //             /// Cleanup failed?
-            //             vscode.window.showErrorMessage("ege: Unexpected error: Perform cleanup failed.");
+            //             vscode.window.showErrorMessage("EGE: Unexpected error: Perform cleanup failed.");
             //         }
             //     } else {
-            //         vscode.window.showInformationMessage('ege: Installation cancelled!');
+            //         vscode.window.showInformationMessage('EGE: Installation cancelled!');
             //     }
             // });
             return;
         }
 
         if (this.progressHandle && this.progressHandle.progressInstance) {
-            vscode.window.showErrorMessage("ege: last progress not finished! Waiting... You can reload this window if you're waiting too long.");
+            vscode.window.showErrorMessage("EGE: Last progress not finished! Waiting... You can reload this window if you're waiting too long.");
             return;
         }
 
@@ -148,7 +154,7 @@ class EGE {
         }
 
         if (!fs.existsSync) {
-            vscode.window.showErrorMessage("ege: Create tmp directory failed!\n");
+            vscode.window.showErrorMessage("EGE: Create tmp directory failed!\n");
             return false;
         }
 
@@ -167,14 +173,14 @@ class EGE {
             this.performUnzip((err) => {
                 if (err) {
                     console.error("Error unzipping: " + err);
-                    vscode.window.showErrorMessage(`ege: unzip ${this.egeDownloadedZipFile} failed!`);
+                    vscode.window.showErrorMessage(`EGE: unzip ${this.egeDownloadedZipFile} failed!`);
                     fs.removeSync(this.egeInstallerDir);
                     if (this.progressHandle) {
                         this.progressHandle.reject();
                     }
                 } else {
                     this.progressHandle.resolve();
-                    vscode.window.showInformationMessage("ege: Installer prepared, please choose a compiler!");
+                    vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
                     this.performCompilerInstallation();
                 }
             });
@@ -184,7 +190,7 @@ class EGE {
         this.checkExistingDownload((exists) => {
             if (!exists) {
                 if (!this.egeDownloadedZipFile) {
-                    vscode.window.showErrorMessage("ege: Get latest ege version failed! Make sure you're online!");
+                    vscode.window.showErrorMessage("EGE: Get latest ege version failed! Make sure you're online!");
                     this.progressHandle.reject();
                     return;
                 }
@@ -193,7 +199,7 @@ class EGE {
                 this.performDownload((err) => {
                     if (err) {
                         console.error("Error downloading: " + err);
-                        vscode.window.showErrorMessage("ege: download ege zip failed!!");
+                        vscode.window.showErrorMessage("EGE: Download ege zip failed!!");
                     } else {
                         nextStep();
                     }
@@ -244,15 +250,15 @@ class EGE {
             p.then(value => {
                 if (value) {
                     this.compilers.performInstall(value, this.egeInstallerDir, () => {
-                        vscode.window.showInformationMessage("ege: install finished!");
+                        vscode.window.showInformationMessage("EGE: Install finished!");
                         this.compilers = null;
                     });
                 } else {
-                    vscode.window.showWarningMessage("ege: choosing compiler cancelled!");
+                    vscode.window.showWarningMessage("EGE: Choosing compiler cancelled!");
                     this.compilers = null;
                 }
             }, () => {
-                vscode.window.showWarningMessage("ege: no compiler choosed.");
+                vscode.window.showWarningMessage("EGE: No compiler choosed.");
                 this.compilers = null;
             });
         } else {
@@ -287,7 +293,7 @@ class EGE {
 
         const installDirContents = fs.readdirSync(this.egeInstallerDir);
         if (installDirContents.length === 0) {
-            vscode.window.showErrorMessage("ege: No content in the installation dir at: " + this.egeInstallerDir);
+            vscode.window.showErrorMessage("EGE: No content in the installation dir at: " + this.egeInstallerDir);
             return;
         }
 
@@ -295,7 +301,7 @@ class EGE {
 
         /// find install dir.
         installDirContents.forEach(file => {
-            console.log("ege: enum install dir content - " + file);
+            console.log("EGE: enum install dir content - " + file);
             const newInstallDir = path.join(this.egeInstallerDir, file);
             const newIncludeDir = path.join(newInstallDir, 'include');
             const newlibsDir = path.join(newInstallDir, 'lib');
@@ -303,7 +309,7 @@ class EGE {
                 if (!validInnerDir) { // pick first
                     validInnerDir = newInstallDir;
                 } else {
-                    vscode.window.showErrorMessage("ege: multi installation dir found, pick the first: " + validInnerDir);
+                    vscode.window.showErrorMessage("EGE: Multi installation dir found, pick the first: " + validInnerDir);
                 }
             }
         });
@@ -364,7 +370,7 @@ class EGE {
         /// remove caches.
         if (this.egeTempDir && this.egeTempDir.length !== 0 && fs.pathExistsSync(this.egeTempDir)) {
             fs.removeSync(this.egeTempDir);
-            vscode.window.showInformationMessage("ege: Cleanup ege plugin cache - Done!");
+            vscode.window.showInformationMessage("EGE: Cleanup ege plugin cache - Done!");
         }
 
         if (this.progressHandle) {
@@ -390,7 +396,7 @@ class EGE {
             if (fileToSave && fileToSave.length != 0 && fs.existsSync(fileToSave)) {
                 /// File must be writable if exists.
                 if (!fs.accessSync(fileToSave, fs.constants.W_OK)) {
-                    vscode.window.showErrorMessage(`ege: File ${fileToSave} already exists and cannot be overwrite!`);
+                    vscode.window.showErrorMessage(`EGE: File ${fileToSave} already exists and cannot be overwrite!`);
                     return null;
                 }
             }
@@ -447,6 +453,32 @@ class EGE {
             this.progressHandle.cancel();
             this.progressHandle = null;
         }
+    }
+}
+
+let extensionContext = null;
+let egeInstance = null;
+
+EGE.registerContext = function (context) {
+    extensionContext = context;
+}
+
+/**
+ * @description single instance.
+ * @returns {EGE}
+ */
+EGE.instance = function () {
+    if (!egeInstance && extensionContext) {
+        egeInstance = new EGE(extensionContext);
+    }
+    return egeInstance;
+}
+
+EGE.unregister = function () {
+    extensionContext = null;
+    if (egeInstance) {
+        egeInstance.cleanup();
+        egeInstance = null;
     }
 }
 

@@ -25,13 +25,13 @@ EGEUtils.openDirectoryInFileExplorer = function (dir) {
     } else if (osName === 'linux') {
         openExplorerCommand = `xdg-open "${dir}"`;
     } else {
-        vscode.window.showErrorMessage(`ege: open dir is not supported on ${dir}`);
+        vscode.window.showErrorMessage(`EGE: Open dir is not supported on ${dir}`);
     }
 
     if (openExplorerCommand) {
         cp.exec(openExplorerCommand, (err) => {
             if (err)
-                vscode.window.showInformationMessage(`ege: open dir ${dir} failed: ${err}`)
+                vscode.window.showInformationMessage(`EGE: Open dir ${dir} failed: ${err}`)
         });
     }
 }

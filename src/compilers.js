@@ -12,7 +12,6 @@ const childProcess = require('child_process');
 const os = require('os');
 const path = require('path');
 const fs = require('fs-extra');
-const mergeDirs = require('merge-dirs').default;
 const utils = require('./utils')
 
 class Compilers {
@@ -46,7 +45,7 @@ class Compilers {
     chooseCompilerByUser() {
         const platformName = os.platform();
         if (platformName !== 'win32' && platformName !== 'cygwin') { /// 目前仅支持 windows
-            vscode.window.showErrorMessage(`ege: Platform ${platformName} is not supported by now!`);
+            vscode.window.showErrorMessage(`EGE: Platform ${platformName} is not supported by now!`);
             return null;
         }
 
@@ -65,14 +64,14 @@ class Compilers {
                     }
 
                     quickPickTitle = arrOutput.concat(quickPickTitle);
-                    console.log("ege: find installed visual studio path: " + output);
+                    console.log("EGE: Find installed visual studio path: " + output);
                 }
             }
         }
 
         this.choosedCompiler = null;
         return vscode.window.showQuickPick(quickPickTitle, {
-            title: "ege: Choose the specific compiler to install.",
+            title: "EGE: Choose the specific compiler to install.",
             canPickMany: false,
             // matchOnDescription: this.TYPE_LATEST_VISUAL_STUDIO
         });
@@ -103,7 +102,7 @@ class Compilers {
                 this.performInstallMinGW64();
                 break;
             default:
-                vscode.window.showInformationMessage("ege: Compiler choosed: " + this.choosedCompiler);
+                vscode.window.showInformationMessage("EGE: Compiler choosed: " + this.choosedCompiler);
                 this.performInstallVisualStudio(installationPath);
                 break;
         }
@@ -193,31 +192,23 @@ class Compilers {
                         this.installerLibsPath = path.join(srcLibsDir, libDirContent[libDirContent.length - 1]);
                     }
 
-                    /// perform copy include dir!
-                    try {
-                        mergeDirs(this.installerIncludePath, this.compilerIncludeDir);
-                        mergeDirs(this.installerLibsPath, this.compilerLibsDir);
-                    } catch (e) {
-                        console.log("mergeDir failed: " + e);
-                        /// Maybe no permission. try copy it by users themselves.
-                        const easyCopyDir = path.join(egeInstallerDir, '../CopyContent');
-                        if (fs.existsSync(easyCopyDir)) {
-                            fs.removeSync(easyCopyDir);
-                        }
-
-                        const tmpIncludeDir = path.join(easyCopyDir, 'include');
-                        const tmpLibsDir = path.join(easyCopyDir, 'lib');
-                        fs.mkdirpSync(tmpIncludeDir);
-                        fs.mkdirpSync(tmpLibsDir);
-                        fs.copySync(this.installerIncludePath, tmpIncludeDir)
-                        fs.copySync(this.installerLibsPath, tmpLibsDir);
-                        this.performCopyByUser(easyCopyDir);
-                        return;
+                    /// No permission. Try copy it by users themselves.
+                    const easyCopyDir = path.join(egeInstallerDir, '../CopyContent');
+                    if (fs.existsSync(easyCopyDir)) {
+                        fs.removeSync(easyCopyDir);
                     }
 
-                    this.validateInstallation();
+                    const tmpIncludeDir = path.join(easyCopyDir, 'include');
+                    const tmpLibsDir = path.join(easyCopyDir, 'lib');
+                    fs.mkdirpSync(tmpIncludeDir);
+                    fs.mkdirpSync(tmpLibsDir);
+                    fs.copySync(this.installerIncludePath, tmpIncludeDir)
+                    fs.copySync(this.installerLibsPath, tmpLibsDir);
+                    this.performCopyByUser(easyCopyDir);
+
+                    // this.validateInstallation();
                 } else {
-                    vscode.window.showErrorMessage(`ege: Invalid dir ${this.installerIncludePath} or ${srcLibsDir}`);
+                    vscode.window.showErrorMessage(`EGE: Invalid dir ${this.installerIncludePath} or ${srcLibsDir}`);
                 }
             }
         }
@@ -270,9 +261,9 @@ pause
     validateInstallation() {
         /// Check `graphics.h`
         if (fs.existsSync(path.join(this.compilerIncludeDir, 'graphics.h') && fs.existsSync(path.join(this.compilerIncludeDir, 'ege.h')))) {
-            vscode.window.showInformationMessage("ege: Finish installation, dst include dir: " + this.compilerIncludeDir);
+            vscode.window.showInformationMessage("EGE: Finish installation, dst include dir: " + this.compilerIncludeDir);
         } else {
-            vscode.window.showErrorMessage("ege: Install failed! EGE Headers not found at: " + this.compilerIncludeDir);
+            vscode.window.showErrorMessage("EGE: Install failed! EGE Headers not found at: " + this.compilerIncludeDir);
         }
 
         const libsDirArray = [
@@ -293,14 +284,14 @@ pause
         });
 
         if (findedLibs.length !== 0) {
-            vscode.window.showInformationMessage("ege: Finish installation, dst libs: " + findedLibs.join(';'));
+            vscode.window.showInformationMessage("EGE: Finish installation, dst libs: " + findedLibs.join(';'));
         } else {
-            vscode.window.showErrorMessage("ege: Install failed! EGE libraries not found at: " + this.compilerIncludeDir);
+            vscode.window.showErrorMessage("EGE: Install failed! EGE libraries not found at: " + this.compilerIncludeDir);
         }
     }
 
     reportNotSupported() {
-        vscode.window.showErrorMessage("ege: Not supported by now! (Only Visual Studio is supported by now)");
+        vscode.window.showErrorMessage("EGE: Not supported by now! (Only Visual Studio is supported by now)");
     }
 
     performInstallDevCpp() {

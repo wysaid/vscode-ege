@@ -18,6 +18,7 @@
 	],
 	"activationEvents": [
 		"onCommand:ege.setup-project",
+		"onCommand:ege.build-and-run-current-file",
 		"onCommand:ege.setup-global",
 		"onCommand:ege.cleanup-caches",
 		"onCommand:ege.open-cache-dir"
@@ -27,19 +28,23 @@
 		"commands": [
 			{
 				"command": "ege.setup-project",
-				"title": "ege: setup with current project"
+				"title": "EGE: Setup with this project"
 			},
 			{
 				"command": "ege.setup-global",
-				"title": "ege: setup in global scope"
+				"title": "EGE: Setup in global scope"
 			},
 			{
 				"command": "ege.cleanup-caches",
-				"title": "ege: cleanup caches"
+				"title": "EGE: Cleanup caches"
 			},
 			{
 				"command": "ege.open-cache-dir",
-				"title": "ege: open cache dir"
+				"title": "EGE: Open cache dir"
+			},
+			{
+				"command": "ege.build-and-run-current-file",
+				"title": "EGE: Build current file"
 			}
 		],
 		"configuration": {
@@ -70,6 +75,11 @@
 			"editor/context": [
 				{
 					"command": "ege.setup-project",
+					"when": "!inOutput && config.ege.showEditorContextMenu",
+					"group": "1_modification"
+				},
+				{
+					"command": "ege.build-and-run-current-file",
 					"when": "!inOutput && config.ege.showEditorContextMenu",
 					"group": "1_modification"
 				}
@@ -106,7 +116,6 @@
 	"dependencies": {
 		"decompress-zip": "^0.3.3",
 		"fs-extra": "^10.0.0",
-		"https": "^1.0.0",
-		"merge-dirs": "^0.2.1"
+		"https": "^1.0.0"
 	}
 }

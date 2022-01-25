@@ -8,6 +8,8 @@
 const vscode = require('vscode');
 const childProcess = require('child_process')
 const EGE = require('./EGE');
+const path = require('path');
+const iconv = require('iconv-lite')
 
 /// 编译单个文件
 
@@ -74,6 +76,63 @@ class SingleFileBuilder {
      */
     performBuildWithVisualStudio(filePath, compilerItem) {
         console.log(`EGE: Performing build with Visual Studio "${compilerItem.path}", file: "${filePath}"`);
+        const cmdTool = compilerItem.getBuildCommandTool();
+        let cppStandard = 'c++11';
+        if (compilerItem.version >= 2019) {
+            /// vs2019, vs2022
+            cppStandard = 'c++17';
+        } else if (compilerItem.version >= 2015) {
+            cppStandard = 'c++14';
+        }
+
+        const arch = 'x86'; // Use x86 default to achieve the best compatible.
+        const fileDir = path.dirname(filePath);
+        const fileBaseName = path.basename(filePath);
+
+        const buildCommand = `call "${cmdTool}" ${arch} && cl /std:${cppStandard} /EHsc "${filePath}" /out:${fileDir}/${fileBaseName}.exe`;
+
+        if (!this.outputChannel) {
+            this.outputChannel = vscode.window.createOutputChannel('EGE');
+        }
+        const outputChannel = this.outputChannel;
+
+        const logMsg = `EGE: Perform build with command: ${buildCommand}`;
+        console.log(logMsg);
+        outputChannel.appendLine(logMsg);
+        outputChannel.show();
+
+        const proc = childProcess.exec(buildCommand, {
+            encoding: 'buffer',
+        },(error, outMsg, errMsg) => {
+            if (error) {
+                console.log(error.cmd);
+                outputChannel.appendLine(errMsg.message);
+            }
+
+            const msg = outMsg || errMsg;
+
+            if (msg) {
+                /// 转码一下, 避免乱码
+                const gbkResult = iconv.decode(msg, 'gbk');
+                outputChannel.appendLine(gbkResult);
+            }
+        });
+
+        proc.on('close', (exitCode) => {
+            if (exitCode !== 0) {
+                vscode.window.showErrorMessage("EGE: Build Failed!");
+            } else {
+                vscode.window.showInformationMessage("EGE: Finish building!");
+            }
+            outputChannel.show();
+
+            /// 5秒后关闭
+            setTimeout(() => {
+                outputChannel.dispose();
+                this.outputChannel = null;
+            }, 5000);
+
+        });
     }
 
     release() {

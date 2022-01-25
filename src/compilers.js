@@ -12,7 +12,8 @@ const childProcess = require('child_process');
 const os = require('os');
 const path = require('path');
 const fs = require('fs-extra');
-const utils = require('./utils')
+const utils = require('./utils');
+const glob = require('glob');
 
 const VS_WHERE = 'C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe';
 
@@ -47,6 +48,8 @@ class CompilerItem {
 
     /// will be 0 if not visual studio
     version = 0;
+
+    activeBuildCommandTool = null;
 
     /**
      * @param {string} path 
@@ -142,6 +145,26 @@ class CompilerItem {
             return null;
         }
     }
+
+    /**
+     * return {string}
+     */
+    getBuildCommandTool() {
+        /// vcvarsall.bat, vcvars32.bat, vcvars64.bat...
+        if (!this.path || !fs.existsSync(this.path)) {
+            return null;
+        }
+
+        if (!this.activeBuildCommandTool) {
+            const tools = glob.sync('**/vcvarsall.bat', { cwd: this.path });
+            if (tools && tools.length > 0) {
+                console.log('EGE: Find build command: ' + tools.join(';'));
+            }
+            this.activeBuildCommandTool = path.join(this.path, tools[0]);
+        }
+        return this.activeBuildCommandTool;
+    }
+
 }
 
 class Compilers {

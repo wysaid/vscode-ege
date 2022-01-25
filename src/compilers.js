@@ -224,7 +224,7 @@ class Compilers {
             this.selectedCompiler = compiler;
         } else {
             this.selectedCompiler = null;
-            vscode.window.showErrorMessage("EGE: Unrecognized compiler " + compiler ? compiler.label : "");
+            vscode.window.showErrorMessage("EGE: Unrecognized compiler " + (compiler ? compiler.path : ""));
         }
     }
 

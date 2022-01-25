@@ -50,13 +50,23 @@ class SingleFileBuilder {
             const comp = ege.getCompilerHandle();
 
             if (!comp.selectedCompiler) {
+                if (!this.outputChannel) {
+                    this.outputChannel = vscode.window.createOutputChannel('EGE');
+                }
+
+                this.outputChannel.appendLine("EGE: Looking for compiler...");
+
                 comp.chooseCompilerByUser()?.then(c => {
                     comp.setCompiler(c);
-                    if (comp.selectedCompiler)
-                        this.buildCurrentActiveFile();
+                    if (comp.selectedCompiler) {
+                        this.outputChannel.appendLine("EGE: Choosed compiler " + comp.selectedCompiler.path);
+                        this.outputChannel.appendLine("EGE: Performing build...");
+                        setTimeout(() => {
+                            this.buildCurrentActiveFile();
+                        }, 100);
+                    }
                 });
             } else {
-
                 const compilerItem = comp.selectedCompiler;
                 if (compilerItem.path) {
                     /// 当前仅支持 visual studio.
@@ -75,7 +85,12 @@ class SingleFileBuilder {
      * @param {EGE.CompilerItem} compilerItem
      */
     performBuildWithVisualStudio(filePath, compilerItem) {
-        console.log(`EGE: Performing build with Visual Studio "${compilerItem.path}", file: "${filePath}"`);
+        if (!this.outputChannel) {
+            this.outputChannel = vscode.window.createOutputChannel('EGE');
+        }
+        const outputChannel = this.outputChannel;
+
+        outputChannel.appendLine(`EGE: Performing build with Visual Studio "${compilerItem.path}", file: "${filePath}"`);
         const cmdTool = compilerItem.getBuildCommandTool();
         let cppStandard = 'c++11';
         if (compilerItem.version >= 2019) {
@@ -86,24 +101,20 @@ class SingleFileBuilder {
         }
 
         const arch = 'x86'; // Use x86 default to achieve the best compatible.
-        const fileDir = path.dirname(filePath);
-        const fileBaseName = path.basename(filePath);
+        const pathParsed = path.parse(filePath);
+        const fileDir = pathParsed.dir;
+        const exeName = pathParsed.dir + '/' + pathParsed.name + '.exe';
 
-        const buildCommand = `call "${cmdTool}" ${arch} && cl /std:${cppStandard} /EHsc "${filePath}" /out:${fileDir}/${fileBaseName}.exe`;
-
-        if (!this.outputChannel) {
-            this.outputChannel = vscode.window.createOutputChannel('EGE');
-        }
-        const outputChannel = this.outputChannel;
+        const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd /std:${cppStandard} /EHsc "${filePath}"`;
 
         const logMsg = `EGE: Perform build with command: ${buildCommand}`;
-        console.log(logMsg);
         outputChannel.appendLine(logMsg);
         outputChannel.show();
 
         const proc = childProcess.exec(buildCommand, {
             encoding: 'buffer',
-        },(error, outMsg, errMsg) => {
+            cwd: fileDir
+        }, (error, outMsg, errMsg) => {
             if (error) {
                 console.log(error.cmd);
                 outputChannel.appendLine(errMsg.message);
@@ -123,6 +134,12 @@ class SingleFileBuilder {
                 vscode.window.showErrorMessage("EGE: Build Failed!");
             } else {
                 vscode.window.showInformationMessage("EGE: Finish building!");
+
+                outputChannel.appendLine("Running " + exeName);
+                setTimeout(() => {
+                    /// dispose right now.
+                    childProcess.exec(`start ${exeName}`);
+                }, 500);
             }
             outputChannel.show();
 

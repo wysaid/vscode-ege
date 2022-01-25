@@ -26,7 +26,7 @@ function activate(context) {
 	EGE.registerContext(context);
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setup-project', () => {
-		vscode.window.showInformationMessage("EGE: Setup-project!!\n");
+		vscode.window.showInformationMessage("EGE: Setup-project not implemented. Do it later...\n");
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setup-global', () => {

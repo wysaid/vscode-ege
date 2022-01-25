@@ -146,7 +146,6 @@ class CompilerItem {
 
 class Compilers {
 
-    choosedCompiler = null;
     onCompleteCallback = null;
 
     installerIncludePath = null;
@@ -201,6 +200,7 @@ class Compilers {
         if (this.compilers && this.compilers.indexOf(compiler) >= 0) {
             this.selectedCompiler = compiler;
         } else {
+            this.selectedCompiler = null;
             vscode.window.showErrorMessage("EGE: Unrecognized compiler " + compiler ? compiler.label : "");
         }
     }
@@ -388,5 +388,10 @@ pause
         this.reportNotSupported();
     }
 };
+
+/**
+ * @class {CompilerItem}
+ */
+Compilers.CompilerItem = CompilerItem;
 
 module.exports = Compilers;

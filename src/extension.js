@@ -7,6 +7,7 @@ const vscode = require('vscode');
 const fs = require('fs-extra');
 
 const EGE = require('./ege');
+const SingleFileBuilder = require('./buildSingleFile');
 
 /**
  * @type {EGEUtils}
@@ -36,13 +37,19 @@ function activate(context) {
 		/// Watch the file and trigger build when changed.
 		let fileToRun = runPath;
 		if (!fileToRun) {
-			fileToRun = vscode.window.activeTextEditor.document.fileName;
+			fileToRun = vscode.window.activeTextEditor?.document?.fileName;
 		}
 
 		if (fs.existsSync(fileToRun)) {
 			/// perform build and run
+			SingleFileBuilder.instance()?.buildCurrentActiveFile();
 		} else {
-			vscode.window.showErrorMessage("EGE: Failed to to build ")
+			if (fileToRun) {
+				vscode.window.showErrorMessage("EGE: Failed to to build: Can not find file " + fileToRun);
+			} else {
+				vscode.window.showErrorMessage("EGE: Failed to to build: No active file selected!");
+			}
+
 		}
 	}));
 
@@ -63,6 +70,7 @@ function activate(context) {
 function deactivate() {
 	/// cleanup
 	EGE.unregister();
+	SingleFileBuilder.unregister();
 }
 
 module.exports = {

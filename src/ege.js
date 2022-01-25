@@ -450,30 +450,40 @@ class EGE {
     }
 }
 
-let extensionContext = null;
-let egeInstance = null;
-
-EGE.registerContext = function (context) {
-    extensionContext = context;
-}
+global.egeInstance = null;
+global.egeExtensionContext = null;
 
 /**
  * @description single instance.
  * @returns {EGE}
  */
+EGE.registerContext = function (context) {
+    global.egeExtensionContext = context;
+}
+
 EGE.instance = function () {
-    if (!egeInstance && extensionContext) {
-        egeInstance = new EGE(extensionContext);
+    if (!global.egeInstance && global.egeExtensionContext) {
+        global.egeInstance = new EGE(global.egeExtensionContext);
     }
-    return egeInstance;
+    return global.egeInstance;
 }
 
 EGE.unregister = function () {
-    extensionContext = null;
-    if (egeInstance) {
-        egeInstance.cleanup();
-        egeInstance = null;
+    if (global.egeInstance) {
+        global.egeInstance.cleanup();
+        global.egeInstance = null;
     }
+    EGE.egeExtensionContext = null;
 }
+
+/**
+ * @class {Compilers}
+ */
+EGE.Compilers = Compilers;
+
+/**
+ * @class {Compilers.CompilerItem}
+ */
+EGE.CompilerItem = Compilers.CompilerItem;
 
 module.exports = EGE;

@@ -18,9 +18,9 @@ const glob = require('glob');
 const VS_WHERE = 'C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe';
 
 /// Only cb's latest version.
-const TYPE_CODE_BLOCKS = 'codeblocks20.03';
-const TYPE_DEV_CPP = 'devcpp';
-const TYPE_MINGW64 = 'mingw64';
+const TYPE_CODE_BLOCKS = 'codeblocks20.03 (待开发, 暂不支持)';
+const TYPE_DEV_CPP = 'devcpp (待开发, 暂不支持)';
+const TYPE_MINGW64 = 'mingw64 (待开发, 暂不支持)';
 const TYPE_VS2015 = 'vs2015';
 const TYPE_VS2017 = 'vs2017';
 const TYPE_VS2019 = 'vs2019';
@@ -156,11 +156,16 @@ class CompilerItem {
         }
 
         if (!this.activeBuildCommandTool) {
-            const tools = glob.sync('**/vcvarsall.bat', { cwd: this.path });
+            let lessPath = path.join(this.path, 'VC');
+            if(!fs.existsSync(lessPath)) {
+                lessPath = this.path;
+            }
+
+            const tools = glob.sync('**/vcvarsall.bat', { cwd: lessPath });
             if (tools && tools.length > 0) {
                 console.log('EGE: Find build command: ' + tools.join(';'));
             }
-            this.activeBuildCommandTool = path.join(this.path, tools[0]);
+            this.activeBuildCommandTool = path.join(lessPath, tools[0]);
         }
         return this.activeBuildCommandTool;
     }
@@ -224,7 +229,9 @@ class Compilers {
             this.selectedCompiler = compiler;
         } else {
             this.selectedCompiler = null;
-            vscode.window.showErrorMessage("EGE: Unrecognized compiler " + (compiler ? compiler.path : ""));
+            if (compiler != null) {
+                vscode.window.showErrorMessage("EGE: Unrecognized compiler " + (compiler ? compiler.path : ""));
+            }
         }
     }
 

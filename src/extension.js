@@ -36,20 +36,59 @@ function activate(context) {
 	context.subscriptions.push(vscode.commands.registerCommand('ege.build-and-run-current-file', (runPath) => {
 		/// Watch the file and trigger build when changed.
 		let fileToRun = runPath;
-		if (!fileToRun) {
+		if (!fileToRun || !fs.existsSync(fileToRun)) {
 			fileToRun = vscode.window.activeTextEditor?.document?.fileName;
+			if (!fs.existsSync(fileToRun)) {
+				/// May focus tasks.
+				const editors = vscode.window.visibleTextEditors;
+				if (editors && editors.length > 0) {
+					/// Choose the first editor.
+					for (const e in editors) {
+						const name = editors[e].document.fileName;
+						if (fs.existsSync(name)) {
+							fileToRun = name;
+							break;
+						}
+					}
+				}
+			}
 		}
+
+		/**
+		 * @type {EGE}
+		 */
+		const egeInstance = EGE.instance();
+
+		/**
+		 * @type {SingleFileBuilder}
+		 */
+		const builder = SingleFileBuilder.instance();
 
 		if (fs.existsSync(fileToRun)) {
 			/// perform build and run
-			SingleFileBuilder.instance()?.buildCurrentActiveFile();
+
+			if (egeInstance) {
+				if (!utils.validateInstallationOfDirectory(egeInstance.egeInstallerDir)) {
+					vscode.window.showWarningMessage("EGE: No installation found, performing initialization. Please try again...");
+					/// 没有执行过安装, 执行一次.
+					egeInstance.egeDownloadedZipFile = egeInstance.egeBundledZip;
+					egeInstance.performUnzip((err) => {
+						if (err) {
+							vscode.window.showErrorMessage("EGE: perform unzip failed: " + err);
+						} else {
+							builder?.buildCurrentActiveFile(fileToRun);
+						}
+					});
+				} else {
+					builder?.buildCurrentActiveFile(fileToRun);
+				}
+			}
 		} else {
 			if (fileToRun) {
 				vscode.window.showErrorMessage("EGE: Failed to to build: Can not find file " + fileToRun);
 			} else {
 				vscode.window.showErrorMessage("EGE: Failed to to build: No active file selected!");
 			}
-
 		}
 	}));
 

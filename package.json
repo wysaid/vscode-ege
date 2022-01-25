@@ -2,7 +2,7 @@
 	"name": "ege",
 	"displayName": "ege",
 	"description": "Auto configuration for ege (https://xege.org)",
-	"version": "0.0.3",
+	"version": "0.1.0",
 	"icon": "images/logo.png",
 	"publisher": "wysaid",
 	"repository": {
@@ -44,7 +44,7 @@
 			},
 			{
 				"command": "ege.build-and-run-current-file",
-				"title": "EGE: Build current file"
+				"title": "EGE: Build and run current file"
 			}
 		],
 		"configuration": {

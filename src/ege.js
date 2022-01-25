@@ -57,10 +57,6 @@ class EGE {
         this.setupContext();
     }
 
-    validateBuiltinBundle() {
-
-    }
-
     setupContext() {
         this.egeTempDir = path.join(os.tmpdir(), this.pluginContext.extension.id);
         console.log("The ege plugin storage path is: " + this.egeTempDir);
@@ -82,7 +78,11 @@ class EGE {
         return true;
     }
 
-    performInstall() {
+    /**
+     * @param {Boolean} needDownload 强制下载
+     * @returns 
+     */
+    performInstall(needDownload) {
 
         if (fs.existsSync(this.egeInstallerDir)) {
 
@@ -158,16 +158,14 @@ class EGE {
                         this.progressHandle.reject();
                     }
                 } else {
-                    vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
                     this.progressHandle.resolve();
+                    vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
                     setTimeout(() => {
                         this.performCompilerInstallation();
                     }, 1);
                 }
             });
         };
-
-        const needDownload = arguments.length > 0 && arguments[0];
 
         if (needDownload) {
             /// Check for the latest version.
@@ -232,13 +230,13 @@ class EGE {
     }
 
     performCompilerInstallation() {
-        if (this.compilerHandle) {
-            vscode.window.showErrorMessage("Last installation not finished!");
-            setTimeout(() => {
-                this.compilerHandle = null;
-            }, 1000);
-            return;
-        }
+        // if (this.compilerHandle) {
+        //     vscode.window.showErrorMessage("Last installation not finished!");
+        //     setTimeout(() => {
+        //         this.compilerHandle = null;
+        //     }, 1000);
+        //     return;
+        // }
 
         const compilerHandle = this.getCompilerHandle();
         const p = compilerHandle.chooseCompilerByUser();

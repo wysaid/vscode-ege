@@ -25,6 +25,8 @@ class SingleFileBuilder {
      */
     buildFiles = null;
 
+    buildSuccessAtLeaseOnce = false;
+
     constructor() {
         this.fileWatcher = vscode.workspace.createFileSystemWatcher("**/*.+(cpp|h|cc|c)", true, false, true);
 
@@ -39,8 +41,8 @@ class SingleFileBuilder {
         });
     }
 
-    buildCurrentActiveFile() {
-        const activeFile = vscode.window.activeTextEditor?.document?.fileName;
+    buildCurrentActiveFile(fileToRun) {
+        const activeFile = fileToRun || vscode.window.activeTextEditor?.document?.fileName;
         if (activeFile) {
 
             /**
@@ -62,7 +64,7 @@ class SingleFileBuilder {
                         this.outputChannel.appendLine("EGE: Choosed compiler " + comp.selectedCompiler.path);
                         this.outputChannel.appendLine("EGE: Performing build...");
                         setTimeout(() => {
-                            this.buildCurrentActiveFile();
+                            this.buildCurrentActiveFile(activeFile);
                         }, 100);
                     }
                 });
@@ -132,8 +134,14 @@ class SingleFileBuilder {
         proc.on('close', (exitCode) => {
             if (exitCode !== 0) {
                 vscode.window.showErrorMessage("EGE: Build Failed!");
+
+                if (!this.buildSuccessAtLeaseOnce) {
+                    /// 如果从未成功过, 那么每次都要重新选一下编译器.
+                    EGE.instance()?.getCompilerHandle()?.setCompiler(null);
+                }
             } else {
                 vscode.window.showInformationMessage("EGE: Finish building!");
+                this.buildSuccessAtLeaseOnce = true;
 
                 outputChannel.appendLine("Running " + exeName);
                 setTimeout(() => {
@@ -143,11 +151,11 @@ class SingleFileBuilder {
             }
             outputChannel.show();
 
-            /// 5秒后关闭
-            setTimeout(() => {
-                outputChannel.dispose();
-                this.outputChannel = null;
-            }, 5000);
+            // /// 5秒后关闭
+            // setTimeout(() => {
+            //     outputChannel.dispose();
+            //     this.outputChannel = null;
+            // }, 5000);
 
         });
     }

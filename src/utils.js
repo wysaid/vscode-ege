@@ -43,37 +43,50 @@ EGEUtils.openDirectoryInFileExplorer = function (dir) {
  * @param {string} dir 
  */
 EGEUtils.validateInstallationOfDirectory = function (dir) {
+
     /// Check `graphics.h`
-    if (fs.existsSync(path.join(dir, 'graphics.h') && fs.existsSync(path.join(dir, 'ege.h')))) {
-        vscode.window.showInformationMessage("EGE: Finish installation, dst include dir: " + dir);
+    const graphicsHeaderPath = path.join(dir, 'include/graphics.h');
+    const egeHeaderPath = path.join(dir, 'include/ege.h');
+
+    if (fs.existsSync(graphicsHeaderPath) && fs.existsSync(egeHeaderPath)) {
+        console.log("EGE: Find " + graphicsHeaderPath);
+        console.log("EGE: Find " + egeHeaderPath);
     } else {
-        vscode.window.showErrorMessage("EGE: Install failed! EGE Headers not found at: " + dir);
+        console.error("EGE: No header at dir: " + dir);
+        return false;
     }
 
     const libsDirArray = [
         'graphics.lib',
         'amd64/graphics.lib',
-        'amd64/graphics.lib',
+        'amd64/graphics64.lib',
         'x86/graphics.lib',
-        'x64/graphics.lib',
+        'x64/graphics64.lib',
     ];
 
     let findedLibs = new Array();
 
     libsDirArray.forEach(name => {
-        const libPath = path.join(this.installerLibsPath, name);
+        let sdkLibDir = path.join(dir, 'lib');
+        if (sdkLibDir.indexOf('wysaid.ege') !== -1 && sdkLibDir.indexOf('Install') !== -1) {
+            /// The plugin temp directory, choose vs2019 to test.
+            sdkLibDir = path.join(sdkLibDir, 'vs2019');
+        }
+        const libPath = path.join(sdkLibDir, name);
         if (fs.existsSync(libPath)) {
             findedLibs.push(libPath);
         }
     });
 
     if (findedLibs.length !== 0) {
-        console.log("EGE: Find installation at: " + findedLibs.join(';'));
+        findedLibs.forEach(f => {
+            console.log("EGE: Find lib file at: " + f);
+        });
+        return true;
     } else {
-        console.log("EGE: EGE libraries not found at: " + dir);
+        console.error("EGE: EGE libraries not found at: " + dir);
+        return false;
     }
-
-    return findedLibs.length !== 0;
 }
 
 module.exports = EGEUtils;

@@ -46,7 +46,7 @@ class EGE {
     /**
      * @type {Compilers}
      */
-    compilers = null;
+    compilerHandle = null;
 
     /**
      * @param {vscode.ExtensionContext} context
@@ -158,9 +158,11 @@ class EGE {
                         this.progressHandle.reject();
                     }
                 } else {
-                    this.progressHandle.resolve();
                     vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
-                    this.performCompilerInstallation();
+                    this.progressHandle.resolve();
+                    setTimeout(() => {
+                        this.performCompilerInstallation();
+                    }, 1);
                 }
             });
         };
@@ -222,34 +224,39 @@ class EGE {
         }
     }
 
+    getCompilerHandle() {
+        if (!this.compilerHandle) {
+            this.compilerHandle = new Compilers(this.pluginContext);
+        }
+        return this.compilerHandle;
+    }
+
     performCompilerInstallation() {
-        if (this.compilers) {
+        if (this.compilerHandle) {
             vscode.window.showErrorMessage("Last installation not finished!");
             setTimeout(() => {
-                this.compilers = null;
+                this.compilerHandle = null;
             }, 1000);
             return;
         }
 
-        this.compilers = new Compilers();
-        const p = this.compilers.chooseCompilerByUser();
+        const compilerHandle = this.getCompilerHandle();
+        const p = compilerHandle.chooseCompilerByUser();
         if (p) {
             p.then(value => {
                 if (value) {
-                    this.compilers.performInstall(value, this.egeInstallerDir, () => {
+                    compilerHandle.setCompiler(value);
+                    compilerHandle.performInstall(value, this.egeInstallerDir, () => {
                         vscode.window.showInformationMessage("EGE: Install finished!");
-                        this.compilers = null;
                     });
                 } else {
                     vscode.window.showWarningMessage("EGE: Choosing compiler cancelled!");
-                    this.compilers = null;
                 }
             }, () => {
                 vscode.window.showWarningMessage("EGE: No compiler choosed.");
-                this.compilers = null;
             });
         } else {
-            this.compilers = null;
+            console.error("Platform does not support.")
         }
     }
 

@@ -48,14 +48,13 @@ class CompilerItem {
     /// will be 0 if not visual studio
     version = 0;
 
-    type = null;
-
     /**
      * @param {string} path 
      */
     constructor(path) {
         /// parse value from path
         this.label = path;
+        this.path = path;
         const ret = this.guessCompilerEnvPath(path);
         if (ret) {
             this.includeDir = ret.include;
@@ -73,6 +72,10 @@ class CompilerItem {
      * @return {ItemEnv}
      */
     guessCompilerEnvPath(dir) {
+        if (!dir) {
+            return null;
+        }
+
         let dirToGuess = dir;
         let guessedIncludeDir = null;
         let guessedLibsDir = null;
@@ -146,9 +149,6 @@ class Compilers {
     choosedCompiler = null;
     onCompleteCallback = null;
 
-    compilerIncludeDir = null;
-    compilerLibsDir = null;
-
     installerIncludePath = null;
     installerLibsPath = null;
 
@@ -179,10 +179,8 @@ class Compilers {
     chooseCompilerByUser() {
         const platformName = os.platform();
         if (platformName !== 'win32' && platformName !== 'cygwin') { /// 目前仅支持 windows
-            setTimeout(() => {
-                vscode.window.showErrorMessage(`EGE: Platform ${platformName} is not supported by now!`)
-                console.log(`EGE: Platform ${platformName} is not supported by now!`);
-            }, 1);
+            vscode.window.showErrorMessage(`EGE: Platform ${platformName} is not supported by now!`)
+            console.log(`EGE: Platform ${platformName} is not supported by now!`);
             return null;
         }
 
@@ -203,7 +201,7 @@ class Compilers {
         if (this.compilers && this.compilers.indexOf(compiler) >= 0) {
             this.selectedCompiler = compiler;
         } else {
-            vscode.window.showErrorMessage("EGE: Unrecognized compiler " + compiler.label);
+            vscode.window.showErrorMessage("EGE: Unrecognized compiler " + compiler ? compiler.label : "");
         }
     }
 
@@ -256,7 +254,7 @@ class Compilers {
 
         this.onCompleteCallback = onComplete;
 
-        switch (this.selectedCompiler) {
+        switch (this.selectedCompiler.path) {
             case TYPE_VS2015:
             case TYPE_VS2017:
             case TYPE_VS2019:
@@ -273,7 +271,7 @@ class Compilers {
                 this.performInstallMinGW64();
                 break;
             default:
-                vscode.window.showInformationMessage("EGE: Compiler choosed: " + this.selectedCompiler);
+                vscode.window.showInformationMessage("EGE: Compiler choosed: " + this.selectedCompiler.path);
                 this.performInstallVisualStudio(installationPath);
                 break;
         }
@@ -283,17 +281,19 @@ class Compilers {
      * @param {string} egeInstallerDir 
      */
     performInstallVisualStudio(egeInstallerDir) {
-        if (fs.existsSync(this.selectedCompiler)) {
+        if (fs.existsSync(this.selectedCompiler.path)) {
             /// User specified dir. May be some version of visual studio.
-            const guessValue = this.guessCompilerEnvPath(this.selectedCompiler);
 
-            if (guessValue) {
-                this.compilerIncludeDir = guessValue.include;
-                this.compilerLibsDir = guessValue.lib;
-                this.visualStudioVersion = guessValue.version;
+            if (!this.selectedCompiler) {
+                console.error("No compiler selected!");
+                return;
             }
 
-            if (this.compilerIncludeDir && this.compilerLibsDir) {
+            if (!this.selectedCompiler.includeDir || !this.selectedCompiler.libDir) {
+                this.selectedCompiler.guessCompilerEnvPath(this.selectedCompiler.path);
+            }
+
+            if (this.selectedCompiler.includeDir && this.selectedCompiler.libDir) {
                 this.installerIncludePath = path.join(egeInstallerDir, 'include');
                 const srcLibsDir = path.join(egeInstallerDir, 'lib');
                 if (fs.existsSync(this.installerIncludePath) && fs.existsSync(srcLibsDir)) {
@@ -333,8 +333,8 @@ class Compilers {
             const batchFileContent = `
 echo "Run as admin, or you can run the commnad below by yourself."
 
-xcopy "${packageDir}/include" "${this.compilerIncludeDir}" /e /d /y /h /r /c
-xcopy "${packageDir}/lib" "${this.compilerLibsDir}" /e /d /y /h /r /c
+xcopy "${packageDir}/include" "${this.selectedCompiler.includeDir}" /e /d /y /h /r /c
+xcopy "${packageDir}/lib" "${this.selectedCompiler.libDir}" /e /d /y /h /r /c
 
 echo "Done!"
 pause
@@ -355,9 +355,9 @@ pause
     请使用管理员身份执行跟此文件同路径下的批处理脚本 "请右键以管理员身份运行以完成EGE安装.bat".
 2. 手动安装:
     1. 复制 "${packageDir}/include" 目录下的所有内容 (注意, 不是复制此 include 目录)
-        之后粘贴至 "${this.compilerIncludeDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
+        之后粘贴至 "${this.selectedCompiler.includeDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
     2. 复制 "${packageDir}/lib" 目录下的所有内容 (注意, 不是复制此 lib 目录)
-        之后粘贴至 "${this.compilerLibsDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
+        之后粘贴至 "${this.selectedCompiler.libDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
 `;
             const readmeFile = path.join(packageDir, '请阅读此文件以完成后续安装.txt');
             const readmeStream = fs.createWriteStream(readmeFile, {

@@ -10,6 +10,7 @@ const childProcess = require('child_process')
 const EGE = require('./EGE');
 const path = require('path');
 const iconv = require('iconv-lite')
+const fs = require('fs-extra');
 
 /// 编译单个文件
 
@@ -94,6 +95,10 @@ class SingleFileBuilder {
 
         outputChannel.appendLine(`EGE: Performing build with Visual Studio "${compilerItem.path}", file: "${filePath}"`);
         const cmdTool = compilerItem.getBuildCommandTool();
+        const installerDir = EGE.instance()?.egeInstallerDir;
+        let extraIncludeDir = null;
+        let extraLibsDir = null;
+
         let cppStandard = 'c++11';
         if (compilerItem.version >= 2019) {
             /// vs2019, vs2022
@@ -102,12 +107,35 @@ class SingleFileBuilder {
             cppStandard = 'c++14';
         }
 
+        if (compilerItem.version > 0) {
+            extraIncludeDir = path.join(installerDir, 'include');
+            const libDir = path.join(installerDir, 'lib');
+            extraLibsDir = path.join(libDir, `vs${compilerItem.version}`);
+            if (!fs.existsSync(extraLibsDir)) {
+                console.log(`EGE: path "${extraLibsDir}" does not exist, set to default`);
+                extraLibsDir = path.join(libDir, 'vs2019'); // 目前最新是这个.
+            }
+        }
+
         const arch = 'x86'; // Use x86 default to achieve the best compatible.
         const pathParsed = path.parse(filePath);
         const fileDir = pathParsed.dir;
         const exeName = pathParsed.dir + '/' + pathParsed.name + '.exe';
+        const extraIncludeCommand = (extraIncludeDir && fs.existsSync(extraIncludeDir)) ? `/I "${extraIncludeDir}"` : '';
+        let extraLibsCommand = '';
 
-        const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd /std:${cppStandard} /EHsc "${filePath}"`;
+        if (extraLibsDir && fs.existsSync(extraLibsDir)) {
+            extraLibsCommand = `/LIBPATH:"${extraLibsDir}"`;
+            const subDirs = ['x86', 'x64', 'amd64'];
+            subDirs.forEach(s => {
+                const newDir = path.join(extraLibsDir, s);
+                if (fs.existsSync(newDir)) {
+                    extraLibsCommand += ` /LIBPATH:"${path.join(extraLibsDir, s)}"`;
+                }
+            });
+        }
+
+        const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd ${extraIncludeCommand} /std:${cppStandard} /EHsc "${filePath}" /link ${extraLibsCommand}`;
 
         const logMsg = `EGE: Perform build with command: ${buildCommand}`;
         outputChannel.appendLine(logMsg);
@@ -119,7 +147,7 @@ class SingleFileBuilder {
         }, (error, outMsg, errMsg) => {
             if (error) {
                 console.log(error.cmd);
-                outputChannel.appendLine(errMsg.message);
+                outputChannel.appendLine(error.cmd);
             }
 
             const msg = outMsg || errMsg;

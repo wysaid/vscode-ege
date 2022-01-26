@@ -25,15 +25,15 @@ function activate(context) {
 
 	EGE.registerContext(context);
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.setup-project', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.setupProject', () => {
 		vscode.window.showInformationMessage("EGE: Setup-project not implemented. Do it later...\n");
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.setup-global', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.setupGlobal', () => {
 		EGE.instance().performInstall();
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.build-and-run-current-file', (runPath) => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', (runPath) => {
 		/// Watch the file and trigger build when changed.
 		let fileToRun = runPath;
 		if (!fileToRun || !fs.existsSync(fileToRun)) {
@@ -92,11 +92,11 @@ function activate(context) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.cleanup-caches', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.cleanupCaches', () => {
 		EGE.instance().clearPluginCache();
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.open-cache-dir', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.openCacheDir', () => {
 		if (EGE.instance().egeInstallerDir && fs.existsSync(EGE.instance().egeInstallerDir)) {
 			utils.openDirectoryInFileExplorer(EGE.instance().egeInstallerDir);
 		} else {

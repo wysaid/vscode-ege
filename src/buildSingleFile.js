@@ -174,7 +174,8 @@ class SingleFileBuilder {
                 outputChannel.appendLine("Running " + exeName);
                 setTimeout(() => {
                     /// dispose right now.
-                    childProcess.exec(`start ${exeName}`);
+                    const folderName = path.dirname(exeName);
+                    childProcess.exec(`cd ${folderName} && start ${exeName}`);
                 }, 500);
             }
             outputChannel.show();

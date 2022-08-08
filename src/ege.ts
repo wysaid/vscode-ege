@@ -3,18 +3,16 @@
  * Date: 2021-10-08
  */
 
-const vscode = require('vscode')
+import vscode = require('vscode')
+import https = require('https');
+import path = require('path');
+import fs = require('fs-extra');
+import os = require('os');
+import * as Unzipper from 'decompress-zip';
+import RequestMsg = require('./RequestMsg');
+import Compilers = require('./compilers');
 
-const https = require('https');
-const path = require('path');
-const fs = require('fs-extra');
-const os = require('os');
-const Unzipper = require('decompress-zip');
-
-const RequestMsg = require('./RequestMsg');
-const Compilers = require('./compilers');
-
-class EGE {
+export class EGE {
 
     /**
      * @type {vscode.ExtensionContext} context
@@ -481,5 +479,3 @@ EGE.Compilers = Compilers;
  * @class {Compilers.CompilerItem}
  */
 EGE.CompilerItem = Compilers.CompilerItem;
-
-module.exports = EGE;

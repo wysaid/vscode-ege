@@ -3,37 +3,28 @@
  * Date: 2021-10-08
  */
 
-const vscode = require('vscode');
+import vscode = require('vscode');
 
-class SimpleMsg {
+export class SimpleMsg {
 
-    msgPrefix = "";
+    static msgPrefix = "";
 
-    /**
-     * @param {string} msg 
-     */
-    constructor(msg) {
-        this.msgPrefix = `[${msg}]:`;
+    constructor(msg: string) {
+        SimpleMsg.msgPrefix = `[${msg}]:`;
     }
 
-    /**
-     * @param {string} info 
-     */
-    showInfo(info) {
+    static showInfo(info: string) {
         vscode.window.showInformationMessage(this.msgPrefix + info);
     }
 
-    showError(error) {
+    static showError(error: string) {
         vscode.window.showErrorMessage(this.msgPrefix + error);
     }
 
     /**
-     * @abstract 弹出一个文本输入对话框, 获取一段输入.
-     * @param {string} title 
-     * @param {function} onComplete 
-     * @param {string} placeholder 
+     *  弹出一个文本输入对话框, 获取一段输入.
      */
-    ask(title, onComplete, placeholder) {
+    static ask(title: string, onComplete: Function, placeholder?: string) {
         vscode.window.showInputBox({
             title: title,
             placeHolder: placeholder
@@ -45,6 +36,3 @@ class SimpleMsg {
         });
     }
 }
-
-
-module.exports = SimpleMsg;

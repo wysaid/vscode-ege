@@ -103,6 +103,7 @@
 		"fileDirname": "echo ${fileDirname}"
 	},
 	"devDependencies": {
+		"@types/fs-extra": "^9.0.13",
 		"@types/glob": "^7.1.4",
 		"@types/mocha": "^9.0.0",
 		"@types/node": "14.x",

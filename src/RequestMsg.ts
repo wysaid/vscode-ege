@@ -3,13 +3,13 @@
  * Date: 2021-10-08
  */
 
-const vscode = require('vscode');
+import vscode = require('vscode');
 
 /// End in 1 minute.
 const LONG_REQUEST_TIMEOUT_VALUE = 60000;
 
 /// 执行一个长请求 (比如请求网络)
-class RequestMsg {
+export class RequestMsg {
     title = "";
     msgPrefix = "";
     intervalHandle = null;
@@ -174,5 +174,3 @@ class RequestMsg {
         this.cancel(msg);
     }
 }
-
-module.exports = RequestMsg;

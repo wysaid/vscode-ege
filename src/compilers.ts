@@ -4,13 +4,13 @@
  */
 /// hard code to detect compilers
 
-const vscode = require('vscode');
-const childProcess = require('child_process');
-const os = require('os');
-const path = require('path');
-const fs = require('fs-extra');
-const utils = require('./utils');
-const glob = require('glob');
+import vscode = require('vscode');
+import childProcess = require('child_process');
+import os = require('os');
+import path = require('path');
+import fs = require('fs-extra');
+import utils = require('./utils');
+import glob = require('glob');
 
 const VS_WHERE = 'C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe';
 
@@ -27,31 +27,28 @@ const TYPE_VS2022 = 'vs2022';
 const TYPE_LATEST_VISUAL_STUDIO = 'vs_latest';
 
 class ItemEnv {
-    include = null;
-    lib = null;
-    version = null;
+    include: string | null = null;
+    lib: string | null = null;
+    version: number = 0;
 };
 
-class CompilerItem {
+export class CompilerItem {
 
-    label = null;
-    description = null;
+    label: string;
+    description: string | undefined;
 
-    path = null;
-    isValid = false;
+    path: string;
+    isValid: boolean = false;
 
-    includeDir = null;
-    libDir = null;
+    includeDir: string | null = null;
+    libDir: string | null = null;
 
     /// will be 0 if not visual studio
     version = 0;
 
-    activeBuildCommandTool = null;
+    activeBuildCommandTool: string | undefined;
 
-    /**
-     * @param {string} path 
-     */
-    constructor(path) {
+    constructor(path: string) {
         /// parse value from path
         this.label = path;
         this.path = path;
@@ -67,18 +64,11 @@ class CompilerItem {
         }
     }
 
-    /**
-     * @param {string} dir 
-     * @return {ItemEnv}
-     */
-    guessCompilerEnvPath(dir) {
-        if (!dir) {
-            return null;
-        }
+    guessCompilerEnvPath(dir: string): ItemEnv | null {
 
         let dirToGuess = dir;
-        let guessedIncludeDir = null;
-        let guessedLibsDir = null;
+        let guessedIncludeDir = "";
+        let guessedLibsDir = "";
         let guessedVSVer = 0;
 
         /// vs2015: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC
@@ -113,7 +103,7 @@ class CompilerItem {
                 if (fs.existsSync(dirToGuess)) {
                     /// different vs build.
                     let buildVerContent = fs.readdirSync(dirToGuess);
-                    let buildVerString = null;
+                    let buildVerString = "";
 
                     if (buildVerContent.length > 0) {
                         if (buildVerContent.length > 1) {
@@ -154,7 +144,7 @@ class CompilerItem {
 
         if (!this.activeBuildCommandTool) {
             let lessPath = path.join(this.path, 'VC');
-            if(!fs.existsSync(lessPath)) {
+            if (!fs.existsSync(lessPath)) {
                 lessPath = this.path;
             }
 
@@ -169,34 +159,24 @@ class CompilerItem {
 
 }
 
-class Compilers {
+export class Compilers {
 
-    onCompleteCallback = null;
+    CompilerItem = CompilerItem;
 
-    installerIncludePath = null;
-    installerLibsPath = null;
+    onCompleteCallback: null | undefined | Function;
 
-    visualStudioVersion = 0;
+    installerIncludePath: string | null = null;
+    installerLibsPath: string | null = null;
 
-    /**
-     * @type {CompilerItem[]}
-     */
-    compilers = null;
+    visualStudioVersion: number = 0;
 
-    /**
-     * @type {CompilerItem}
-     */
-    selectedCompiler = null;
+    compilers: CompilerItem[] | undefined;
 
-    /**
-     * @type {vscode.ExtensionContext}
-     */
-    extensionContext = null;
+    selectedCompiler: CompilerItem | null = null;
 
-    /**
-     * @param {vscode.ExtensionContext} context 
-     */
-    constructor(context) {
+    extensionContext: vscode.ExtensionContext;
+
+    constructor(context: vscode.ExtensionContext) {
         this.extensionContext = context;
     }
 
@@ -217,11 +197,7 @@ class Compilers {
         });
     }
 
-    /**
-     * 
-     * @param {CompilerItem} compiler 
-     */
-    setCompiler(compiler) {
+    setCompiler(compiler: CompilerItem) {
         if (this.compilers && this.compilers.indexOf(compiler) >= 0) {
             this.selectedCompiler = compiler;
         } else {
@@ -251,7 +227,7 @@ class Compilers {
                         }
 
                         arrOutput.forEach(v => {
-                            this.compilers.push(new CompilerItem(v));
+                            (this.compilers as Array<CompilerItem>).push(new CompilerItem(v));
                         });
 
                         console.log("EGE: Find installed visual studio path: " + output);
@@ -261,7 +237,7 @@ class Compilers {
 
             const quickPickTitle = [TYPE_DEV_CPP, TYPE_MINGW64, TYPE_CODE_BLOCKS];
             quickPickTitle.forEach(v => {
-                this.compilers.push(new CompilerItem(v));
+                (this.compilers as Array<CompilerItem>).push(new CompilerItem(v));
             });
         }
         return this.compilers;
@@ -273,7 +249,7 @@ class Compilers {
      * @param {string} installationPath 
      * @param {function} onComplete 
      */
-    performInstall(selectedCompiler, installationPath, onComplete) {
+    performInstall(selectedCompiler: CompilerItem, installationPath: string, onComplete?: Function) {
 
         if (selectedCompiler) {
             this.selectedCompiler = selectedCompiler;
@@ -281,7 +257,7 @@ class Compilers {
 
         this.onCompleteCallback = onComplete;
 
-        switch (this.selectedCompiler.path) {
+        switch ((this.selectedCompiler as CompilerItem).path) {
             case TYPE_VS2015:
             case TYPE_VS2017:
             case TYPE_VS2019:
@@ -298,29 +274,29 @@ class Compilers {
                 this.performInstallMinGW64();
                 break;
             default:
-                vscode.window.showInformationMessage("EGE: Compiler choosed: " + this.selectedCompiler.path);
+                vscode.window.showInformationMessage("EGE: Compiler choosed: " + (this.selectedCompiler as CompilerItem).path);
                 this.performInstallVisualStudio(installationPath);
                 break;
         }
     }
 
-    /**
-     * @param {string} egeInstallerDir 
-     */
-    performInstallVisualStudio(egeInstallerDir) {
-        if (fs.existsSync(this.selectedCompiler.path)) {
+    performInstallVisualStudio(egeInstallerDir: string) {
+        const c = this.selectedCompiler as CompilerItem;
+        if (fs.existsSync(c.path)) {
             /// User specified dir. May be some version of visual studio.
 
-            if (!this.selectedCompiler) {
+            if (!c) {
                 console.error("No compiler selected!");
                 return;
             }
 
-            if (!this.selectedCompiler.includeDir || !this.selectedCompiler.libDir) {
-                this.selectedCompiler.guessCompilerEnvPath(this.selectedCompiler.path);
+            if (!c.includeDir || !c.libDir) {
+                c.guessCompilerEnvPath(c.path);
             }
 
-            if (this.selectedCompiler.includeDir && this.selectedCompiler.libDir) {
+            const installerIncludePath = this.installerIncludePath as string;
+
+            if (c.includeDir && c.libDir) {
                 this.installerIncludePath = path.join(egeInstallerDir, 'include');
                 const srcLibsDir = path.join(egeInstallerDir, 'lib');
                 if (fs.existsSync(this.installerIncludePath) && fs.existsSync(srcLibsDir)) {
@@ -355,13 +331,15 @@ class Compilers {
         }
     }
 
-    performCopyByUser(packageDir) {
+    performCopyByUser(packageDir: string) {
+        const c = this.selectedCompiler as CompilerItem;
+
         {
             const batchFileContent = `
 echo "Run as admin, or you can run the commnad below by yourself."
 
-xcopy "${packageDir}/include" "${this.selectedCompiler.includeDir}" /e /d /y /h /r /c
-xcopy "${packageDir}/lib" "${this.selectedCompiler.libDir}" /e /d /y /h /r /c
+xcopy "${packageDir}/include" "${c.includeDir}" /e /d /y /h /r /c
+xcopy "${packageDir}/lib" "${c.libDir}" /e /d /y /h /r /c
 
 echo "Done!"
 pause
@@ -382,9 +360,9 @@ pause
     请使用管理员身份执行跟此文件同路径下的批处理脚本 "请右键以管理员身份运行以完成EGE安装.bat".
 2. 手动安装:
     1. 复制 "${packageDir}/include" 目录下的所有内容 (注意, 不是复制此 include 目录)
-        之后粘贴至 "${this.selectedCompiler.includeDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
+        之后粘贴至 "${c.includeDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
     2. 复制 "${packageDir}/lib" 目录下的所有内容 (注意, 不是复制此 lib 目录)
-        之后粘贴至 "${this.selectedCompiler.libDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
+        之后粘贴至 "${c.libDir}" 目录, 选择覆盖。 如果提示需要管理员权限, 请直接确认.
 `;
             const readmeFile = path.join(packageDir, '请阅读此文件以完成后续安装.txt');
             const readmeStream = fs.createWriteStream(readmeFile, {
@@ -416,9 +394,3 @@ pause
     }
 };
 
-/**
- * @class {CompilerItem}
- */
-Compilers.CompilerItem = CompilerItem;
-
-module.exports = Compilers;

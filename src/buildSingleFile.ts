@@ -3,12 +3,12 @@
  * Date: 2022-1-25
  */
 
-const vscode = require('vscode');
-const childProcess = require('child_process')
-const EGE = require('./EGE');
-const path = require('path');
-const iconv = require('iconv-lite')
-const fs = require('fs-extra');
+import vscode = require('vscode');
+import childProcess = require('child_process')
+import { EGE } from './ege';
+import path = require('path');
+import iconv = require('iconv-lite')
+import fs = require('fs-extra');
 
 /// 编译单个文件
 

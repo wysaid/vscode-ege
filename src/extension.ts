@@ -1,11 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 
-const vscode = require('vscode');
-const fs = require('fs-extra');
-
-const EGE = require('./ege');
-const SingleFileBuilder = require('./buildSingleFile');
+import vscode = require('vscode');
+import fs = require('fs-extra');
+import EGE = require('./ege');
+import SingleFileBuilder = require('./buildSingleFile');
 
 /**
  * @type {EGEUtils}

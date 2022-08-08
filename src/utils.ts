@@ -3,19 +3,21 @@
  * Date: 2022-1-23
  */
 
-const cp = require('child_process');
-const os = require('os');
-const vscode = require('vscode');
-const fs = require('fs-extra');
-const path = require('path');
+import cp = require('child_process');
+import os = require('os');
+import vscode = require('vscode');
+import fs = require('fs-extra');
+import path = require('path');
 
-class EGEUtils {
-}
+const libsDirArray = [
+    'graphics.lib',
+    'amd64/graphics.lib',
+    'amd64/graphics64.lib',
+    'x86/graphics.lib',
+    'x64/graphics64.lib',
+];
 
-/**
- * @param {string} dir 
- */
-EGEUtils.openDirectoryInFileExplorer = function (dir) {
+export function openDirectoryInFileExplorer(dir: string) {
     const osName = os.platform();
     let openExplorerCommand = null;
     if (osName === 'win32' || osName === 'cygwin') { /// win
@@ -36,11 +38,7 @@ EGEUtils.openDirectoryInFileExplorer = function (dir) {
     }
 }
 
-/**
- * 
- * @param {string} dir 
- */
-EGEUtils.validateInstallationOfDirectory = function (dir) {
+export function validateInstallationOfDirectory(dir: string): boolean {
 
     /// Check `graphics.h`
     const graphicsHeaderPath = path.join(dir, 'include/graphics.h');
@@ -53,14 +51,6 @@ EGEUtils.validateInstallationOfDirectory = function (dir) {
         console.error("EGE: No header at dir: " + dir);
         return false;
     }
-
-    const libsDirArray = [
-        'graphics.lib',
-        'amd64/graphics.lib',
-        'amd64/graphics64.lib',
-        'x86/graphics.lib',
-        'x64/graphics64.lib',
-    ];
 
     let findedLibs = new Array();
 
@@ -86,5 +76,3 @@ EGEUtils.validateInstallationOfDirectory = function (dir) {
         return false;
     }
 }
-
-module.exports = EGEUtils;

@@ -1,9 +1,7 @@
-// @ts-nocheck
 /**
  * Author: wysaid
  * Date: 2022-1-25
  */
-'use strict';
 
 const vscode = require('vscode');
 const childProcess = require('child_process')

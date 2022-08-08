@@ -1,10 +1,7 @@
-// @ts-nocheck
 /**
  * Author: wysaid
  * Date: 2022-1-23
  */
-'use strict';
-
 /// hard code to detect compilers
 
 const vscode = require('vscode');

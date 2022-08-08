@@ -1,9 +1,7 @@
-// @ts-nocheck
 /**
  * Author: wysaid
  * Date: 2022-1-23
  */
-'use strict';
 
 const cp = require('child_process');
 const os = require('os');

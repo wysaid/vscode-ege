@@ -1,9 +1,8 @@
-// @ts-nocheck
 /**
  * Author: wysaid
  * Date: 2021-10-08
  */
-'use strict';
+
 const vscode = require('vscode');
 
 /// End in 1 minute.

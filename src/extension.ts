@@ -1,7 +1,5 @@
-// @ts-nocheck
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-'use strict';
 
 const vscode = require('vscode');
 const fs = require('fs-extra');

@@ -8,9 +8,13 @@
 		],
 		"outDir": "dist",
 		"rootDir": "src",
-		"strict": true
+		"strict": true,
+		"removeComments": true,
 	},
 	"exclude": [
 		"node_modules"
+	],
+	"include": [
+		"src/**/*"
 	]
 }

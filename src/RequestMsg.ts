@@ -1,45 +1,36 @@
-// @ts-nocheck
 /**
  * Author: wysaid
  * Date: 2021-10-08
  */
-'use strict';
-const vscode = require('vscode');
+
+import vscode = require('vscode');
 
 /// End in 1 minute.
 const LONG_REQUEST_TIMEOUT_VALUE = 60000;
 
 /// 执行一个长请求 (比如请求网络)
-class RequestMsg {
+export class RequestMsg {
     title = "";
     msgPrefix = "";
-    intervalHandle = null;
-    progressInstance = null;
-    progressToken = null;
+    intervalHandle: NodeJS.Timeout | null = null;
+    progressInstance: vscode.Progress<any> | null = null;
+    progressToken: vscode.CancellationToken | null = null;
     progressPercent = 0;
     progressPercentTo = 0;
-    progressReject = null;
-    progressResolve = null;
+    progressReject: Function | null = null;
+    progressResolve: Function | null = null;
     progressDurationTimeInMs = 0;
     progressTimeoutValue = LONG_REQUEST_TIMEOUT_VALUE;
     showingMessage = "";
 
-    cancelCallback = null;
+    cancelCallback: Function | null = null;
 
-    /**
-     * 
-     * @param {string} title 
-     * @param {string} msgPrefix 
-     */
-    constructor(title, msgPrefix) {
+    constructor(title: string, msgPrefix: string) {
         this.title = title;
         this.msgPrefix = `[${msgPrefix}]: `;
     }
 
-    /**
-     * @param {function} cancelCallback 
-     */
-    start(showingMessage, cancelCallback) {
+    start(showingMessage: string, cancelCallback: Function) {
 
         this.showingMessage = showingMessage;
         this.cancelCallback = cancelCallback;
@@ -114,10 +105,7 @@ class RequestMsg {
         });
     }
 
-    /**
-     * @param {string} msg 
-     */
-    updateProgress(msg) {
+    updateProgress(msg: string) {
         if (this.progressPercentTo < 95) {
             if (this.progressPercentTo < 70) {
                 this.progressPercentTo += 15;
@@ -137,7 +125,7 @@ class RequestMsg {
         this.progressInstance = null;
     }
 
-    cancel(reason) {
+    cancel(reason?: any) {
         if (this.progressReject) {
             this.progressReject(reason);
             this.progressReject = null;
@@ -145,6 +133,10 @@ class RequestMsg {
         }
 
         this.clearProgressInterval();
+    }
+
+    reject() {
+        this.cancel();
     }
 
     resolve() {
@@ -168,12 +160,10 @@ class RequestMsg {
     /**
      * @param {string} msg 
      */
-    onError(msg) {
+    onError(msg: string) {
         if (this.cancelCallback) {
             this.cancelCallback();
         }
         this.cancel(msg);
     }
 }
-
-module.exports = RequestMsg;

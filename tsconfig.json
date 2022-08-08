@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "ESNext",
+		"checkJs": true, /* Typecheck .js files. */
+		"lib": [
+			"ESNext"
+		],
+		"outDir": "dist",
+		"rootDir": "src",
+		"sourceMap": true,
+		"strict": true,
+		"removeComments": true,
+		"noUnusedParameters": true,
+		"esModuleInterop": true,
+		"noImplicitAny": true,
+		"allowJs": true,
+		"alwaysStrict": true
+	},
+	"exclude": [
+		"node_modules",
+		"./dist",
+		"webpack.config.js"
+	]
+}

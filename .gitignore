@@ -2,3 +2,5 @@ node_modules/
 build/
 *.vsix
 package-lock.json
+/dist
+/out

@@ -1,23 +1,14 @@
-// @ts-nocheck
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-'use strict';
 
-const vscode = require('vscode');
-const fs = require('fs-extra');
+import vscode = require('vscode');
+import fs = require('fs-extra');
+import {EGE} from './ege';
+import { SingleFileBuilder } from './buildSingleFile';
 
-const EGE = require('./ege');
-const SingleFileBuilder = require('./buildSingleFile');
+import utils = require('./utils')
 
-/**
- * @type {EGEUtils}
- */
-const utils = require('./utils')
-
-/**
- * @param {vscode.ExtensionContext} context
- */
-function activate(context) {
+function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -54,9 +45,6 @@ function activate(context) {
 			}
 		}
 
-		/**
-		 * @type {EGE}
-		 */
 		const egeInstance = EGE.instance();
 
 		/**

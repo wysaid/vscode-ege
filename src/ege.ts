@@ -440,6 +440,9 @@ export class EGE {
 
     static registerContext(context: vscode.ExtensionContext) {
         EGE.egeExtensionContext = context;
+        if (!EGE.egeInstance) {
+            EGE.egeInstance = new EGE(context);
+        }
     }
 
     static unregister() {

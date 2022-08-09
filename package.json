@@ -25,7 +25,7 @@
 		"onCommand:ege.cleanupCaches",
 		"onCommand:ege.openCacheDir"
 	],
-	"main": "dist/extension.js",
+	"main": "./dist/extension.js",
 	"contributes": {
 		"commands": [
 			{
@@ -97,8 +97,11 @@
 	},
 	"scripts": {
 		"lint": "eslint .",
-		"pretest": "npm run lint",
-		"test": "node ./test/runTest.js"
+		"vscode:prepublish": "npm run esbuild-base -- --minify",
+		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+		"esbuild": "npm run esbuild-base -- --sourcemap",
+		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+		"test-compile": "tsc -p ./"
 	},
 	"commands": {
 		"file": "echo ${file}",
@@ -112,6 +115,7 @@
 		"@types/node": "14.x",
 		"@types/vscode": "^1.61.0",
 		"@vscode/test-electron": "^1.6.2",
+		"esbuild": "^0.14.54",
 		"eslint": "^8.0.0",
 		"mocha": "^8.1.3",
 		"typescript": "^4.4.3"

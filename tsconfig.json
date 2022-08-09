@@ -8,10 +8,14 @@
 		],
 		"outDir": "dist",
 		"rootDir": "src",
+		"sourceMap": true,
 		"strict": true,
 		"removeComments": true,
+		"noUnusedParameters": true,
+		"esModuleInterop": true,
 	},
-	"include": [
-		"src/**/*"
+	"exclude": [
+		"node_modules",
+		"./dist"
 	]
 }

@@ -14,7 +14,6 @@ import { RequestMsg } from './RequestMsg';
 import compilers = require('./compilers');
 
 export class EGE {
-
     pluginContext: vscode.ExtensionContext;
 
     egeTempDir: string;
@@ -455,4 +454,9 @@ export class EGE {
 
     static Compilers = compilers.Compilers;
     static CompilerItem = compilers.CompilerItem;
+}
+
+export namespace EGE {
+    export type Compilers = compilers.Compilers;
+    export type CompilerItem = compilers.CompilerItem;
 }

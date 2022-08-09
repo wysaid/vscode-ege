@@ -71,12 +71,8 @@ export class SingleFileBuilder {
         }
     }
 
-    /**
-     * 
-     * @param {string} filePath 
-     * @param {EGE.CompilerItem} compilerItem
-     */
-    performBuildWithVisualStudio(filePath: string, compilerItem: EGE.CompilerItem) {
+    performBuildWithVisualStudio(filePath: string, compilerItem: EGE.CompilerItem): void {
+        
         if (!this.outputChannel) {
             this.outputChannel = vscode.window.createOutputChannel('EGE');
         }

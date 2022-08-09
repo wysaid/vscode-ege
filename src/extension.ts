@@ -3,7 +3,7 @@
 
 import vscode = require('vscode');
 import fs = require('fs-extra');
-import { EGE } from './ege';
+import {EGE} from './ege';
 import { SingleFileBuilder } from './buildSingleFile';
 
 import utils = require('./utils')

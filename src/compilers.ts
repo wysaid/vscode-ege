@@ -158,7 +158,7 @@ export class CompilerItem {
 
 export class Compilers {
 
-    CompilerItem = CompilerItem;
+    static CompilerItem = CompilerItem;
 
     onCompleteCallback: null | undefined | Function;
 

@@ -8,52 +8,38 @@ import https = require('https');
 import path = require('path');
 import fs = require('fs-extra');
 import os = require('os');
-import * as Unzipper from 'decompress-zip';
+// import * as Unzipper from 'decompress-zip';
+import decompress = require('decompress');
 import RequestMsg = require('./RequestMsg');
 import Compilers = require('./compilers');
 
 export class EGE {
 
-    /**
-     * @type {vscode.ExtensionContext} context
-     */
-    pluginContext = null;
+    pluginContext: vscode.ExtensionContext;
 
-    egeTempDir = null;
-    egeDownloadDir = null;
+    egeTempDir: string;
+    egeDownloadDir: string;
     egeDownloadUrl = "https://xege.org/download/ege-latest-version";
-    egeDownloadedZipFile = null;
-    egeLatestVersion = null;
-    egeInstallerDir = null;
-    egeIncludeDir = null;
-    egeLibsDir = null;
-    egeDemoDir = null;
+    egeDownloadedZipFile: string | null = null;
+    egeLatestVersion: string | null = null;
+    egeInstallerDir: string;
+    egeIncludeDir: string;
+    egeLibsDir: string;
+    egeDemoDir: string;
 
     /// builtin bundles
-    egeBundleDir = null;
-    egeBundledZip = null;
+    egeBundleDir: string | null = null;
+    egeBundledZip: string | null = null;
 
-    /**
-     * @type {RequestMsg} context
-     */
-    progressHandle = null;
-    installationCancelled = false;
+    progressHandle: RequestMsg | null = null;
+    installationCancelled: boolean = false;
 
-    /**
-     * @type {Compilers}
-     */
-    compilerHandle = null;
 
-    /**
-     * @param {vscode.ExtensionContext} context
-     */
-    constructor(context) {
+    compilerHandle: Compilers | null = null;
+
+    constructor(context: vscode.ExtensionContext) {
         //@type {vscode.ExtensionContext}
         this.pluginContext = context;
-        this.setupContext();
-    }
-
-    setupContext() {
         this.egeTempDir = path.join(os.tmpdir(), this.pluginContext.extension.id);
         console.log("The ege plugin storage path is: " + this.egeTempDir);
         this.egeDownloadDir = path.join(this.egeTempDir, "Download");
@@ -71,14 +57,9 @@ export class EGE {
             vscode.window.showErrorMessage("EGE: builtin bundle not found at: " + this.egeBundledZip);
         }
 
-        return true;
     }
 
-    /**
-     * @param {Boolean} needDownload 强制下载
-     * @returns 
-     */
-    performInstall(needDownload) {
+    performInstall(needDownload: boolean) {
 
         if (fs.existsSync(this.egeInstallerDir)) {
 
@@ -194,7 +175,7 @@ export class EGE {
         }
     }
 
-    checkExistingDownload(callback) {
+    checkExistingDownload(callback: Function) {
         this.getLatestVersion((v) => {
             if (v && v.length > 0) {
                 /// 检查对应版本号的文件是否存在.
@@ -208,7 +189,7 @@ export class EGE {
         });
     }
 
-    performDownload(onComplete) {
+    performDownload(onComplete: Function) {
 
         const p = this.requestUrlData(this.egeDownloadUrl, this.egeDownloadedZipFile);
         if (p) {
@@ -325,7 +306,12 @@ export class EGE {
         }
     }
 
-    performUnzip(onComplete) {
+    performUnzip(onComplete: Function) {
+
+        decompress(this.egeDownloadedZipFile, {
+            path: this.egeInstallerDir
+        });
+
         const unzip = new Unzipper(this.egeDownloadedZipFile);
         unzip.on('extract', () => {
             console.log("Finished unzipping...");

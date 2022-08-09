@@ -12,33 +12,25 @@ const LONG_REQUEST_TIMEOUT_VALUE = 60000;
 export class RequestMsg {
     title = "";
     msgPrefix = "";
-    intervalHandle = null;
-    progressInstance = null;
-    progressToken = null;
+    intervalHandle: NodeJS.Timeout | null = null;
+    progressInstance: vscode.Progress<any> | null = null;
+    progressToken: vscode.CancellationToken | null = null;
     progressPercent = 0;
     progressPercentTo = 0;
-    progressReject = null;
-    progressResolve = null;
+    progressReject: Function | null = null;
+    progressResolve: Function | null = null;
     progressDurationTimeInMs = 0;
     progressTimeoutValue = LONG_REQUEST_TIMEOUT_VALUE;
     showingMessage = "";
 
-    cancelCallback = null;
+    cancelCallback: Function | null = null;
 
-    /**
-     * 
-     * @param {string} title 
-     * @param {string} msgPrefix 
-     */
-    constructor(title, msgPrefix) {
+    constructor(title: string, msgPrefix: string) {
         this.title = title;
         this.msgPrefix = `[${msgPrefix}]: `;
     }
 
-    /**
-     * @param {function} cancelCallback 
-     */
-    start(showingMessage, cancelCallback) {
+    start(showingMessage: string, cancelCallback: Function) {
 
         this.showingMessage = showingMessage;
         this.cancelCallback = cancelCallback;
@@ -113,10 +105,7 @@ export class RequestMsg {
         });
     }
 
-    /**
-     * @param {string} msg 
-     */
-    updateProgress(msg) {
+    updateProgress(msg: string) {
         if (this.progressPercentTo < 95) {
             if (this.progressPercentTo < 70) {
                 this.progressPercentTo += 15;
@@ -136,7 +125,7 @@ export class RequestMsg {
         this.progressInstance = null;
     }
 
-    cancel(reason) {
+    cancel(reason?: any) {
         if (this.progressReject) {
             this.progressReject(reason);
             this.progressReject = null;
@@ -144,6 +133,10 @@ export class RequestMsg {
         }
 
         this.clearProgressInterval();
+    }
+
+    reject() {
+        this.cancel();
     }
 
     resolve() {
@@ -167,7 +160,7 @@ export class RequestMsg {
     /**
      * @param {string} msg 
      */
-    onError(msg) {
+    onError(msg: string) {
         if (this.cancelCallback) {
             this.cancelCallback();
         }

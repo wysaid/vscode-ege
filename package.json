@@ -14,6 +14,8 @@
 		"vscode": "^1.61.0"
 	},
 	"categories": [
+		"Education",
+		"Programming Languages",
 		"Other"
 	],
 	"activationEvents": [
@@ -23,7 +25,7 @@
 		"onCommand:ege.cleanupCaches",
 		"onCommand:ege.openCacheDir"
 	],
-	"main": "./src/extension.js",
+	"main": "dist/extension.js",
 	"contributes": {
 		"commands": [
 			{

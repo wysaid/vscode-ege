@@ -3,18 +3,12 @@
 
 import vscode = require('vscode');
 import fs = require('fs-extra');
-import EGE = require('./ege');
-import SingleFileBuilder = require('./buildSingleFile');
+import { EGE } from './ege';
+import { SingleFileBuilder } from './buildSingleFile';
 
-/**
- * @type {EGEUtils}
- */
-const utils = require('./utils')
+import utils = require('./utils')
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function activate(context) {
+function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -51,9 +45,6 @@ function activate(context) {
 			}
 		}
 
-		/**
-		 * @type {EGE}
-		 */
 		const egeInstance = EGE.instance();
 
 		/**

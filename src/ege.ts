@@ -10,8 +10,8 @@ import fs = require('fs-extra');
 import os = require('os');
 // import * as Unzipper from 'decompress-zip';
 import decompress = require('decompress');
-import RequestMsg = require('./RequestMsg');
-import Compilers = require('./compilers');
+import { RequestMsg } from './RequestMsg';
+import compilers = require('./compilers');
 
 export class EGE {
 
@@ -20,22 +20,21 @@ export class EGE {
     egeTempDir: string;
     egeDownloadDir: string;
     egeDownloadUrl = "https://xege.org/download/ege-latest-version";
-    egeDownloadedZipFile: string | null = null;
-    egeLatestVersion: string | null = null;
+    egeDownloadedZipFile?: string;
+    egeLatestVersion?: string;
     egeInstallerDir: string;
     egeIncludeDir: string;
     egeLibsDir: string;
     egeDemoDir: string;
 
     /// builtin bundles
-    egeBundleDir: string | null = null;
-    egeBundledZip: string | null = null;
+    egeBundleDir?: string;
+    egeBundledZip?: string;
 
-    progressHandle: RequestMsg | null = null;
+    progressHandle?: RequestMsg;
     installationCancelled: boolean = false;
 
-
-    compilerHandle: Compilers | null = null;
+    compilerHandle?: compilers.Compilers;
 
     constructor(context: vscode.ExtensionContext) {
         //@type {vscode.ExtensionContext}
@@ -59,7 +58,7 @@ export class EGE {
 
     }
 
-    performInstall(needDownload: boolean) {
+    performInstall(needDownload?: boolean) {
 
         if (fs.existsSync(this.egeInstallerDir)) {
 
@@ -120,22 +119,22 @@ export class EGE {
             /// Cancelled by user.
             this.installationCancelled = true;
             setTimeout(() => {
-                this.progressHandle = null;
+                delete this.progressHandle;
             }, 1);
         });
 
         const nextStep = () => {
-            this.progressHandle.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
-            this.performUnzip((err) => {
+            this.progressHandle?.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
+            this.performUnzip((err: undefined | string) => {
                 if (err) {
-                    console.error("Error unzipping: " + err);
+                    console.error("ege: " + err);
                     vscode.window.showErrorMessage(`EGE: unzip ${this.egeDownloadedZipFile} failed!`);
                     fs.removeSync(this.egeInstallerDir);
                     if (this.progressHandle) {
                         this.progressHandle.reject();
                     }
                 } else {
-                    this.progressHandle.resolve();
+                    this.progressHandle?.resolve();
                     vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
                     setTimeout(() => {
                         this.performCompilerInstallation();
@@ -150,11 +149,11 @@ export class EGE {
                 if (!exists) {
                     if (!this.egeDownloadedZipFile) {
                         vscode.window.showErrorMessage("EGE: Get latest ege version failed! Make sure you're online!");
-                        this.progressHandle.reject();
+                        this.progressHandle?.reject();
                         return;
                     }
 
-                    this.progressHandle.updateProgress("Downloading " + this.egeDownloadUrl);
+                    this.progressHandle?.updateProgress("Downloading " + this.egeDownloadUrl);
                     this.performDownload((err) => {
                         if (err) {
                             console.error("Error downloading: " + err);
@@ -175,7 +174,7 @@ export class EGE {
         }
     }
 
-    checkExistingDownload(callback: Function) {
+    checkExistingDownload(callback: (a: boolean) => void) {
         this.getLatestVersion((v) => {
             if (v && v.length > 0) {
                 /// 检查对应版本号的文件是否存在.
@@ -183,13 +182,13 @@ export class EGE {
                 this.egeDownloadedZipFile = this.egeDownloadDir + `/ege_${v}.zip`;
                 console.log("checkExistingDownload: " + this.egeDownloadedZipFile);
             } else {
-                this.egeDownloadedZipFile = null;
+                delete this.egeDownloadedZipFile;
             }
             callback(this.egeDownloadedZipFile != null && fs.existsSync(this.egeDownloadedZipFile));
         });
     }
 
-    performDownload(onComplete: Function) {
+    performDownload(onComplete: (a: string | void) => void) {
 
         const p = this.requestUrlData(this.egeDownloadUrl, this.egeDownloadedZipFile);
         if (p) {
@@ -201,20 +200,12 @@ export class EGE {
 
     getCompilerHandle() {
         if (!this.compilerHandle) {
-            this.compilerHandle = new Compilers(this.pluginContext);
+            this.compilerHandle = new compilers.Compilers(this.pluginContext);
         }
         return this.compilerHandle;
     }
 
     performCompilerInstallation() {
-        // if (this.compilerHandle) {
-        //     vscode.window.showErrorMessage("Last installation not finished!");
-        //     setTimeout(() => {
-        //         this.compilerHandle = null;
-        //     }, 1000);
-        //     return;
-        // }
-
         const compilerHandle = this.getCompilerHandle();
         const p = compilerHandle.chooseCompilerByUser();
         if (p) {
@@ -266,7 +257,7 @@ export class EGE {
             return;
         }
 
-        let validInnerDir = null;
+        let validInnerDir: string | undefined;
 
         /// find install dir.
         installDirContents.forEach(file => {
@@ -289,7 +280,7 @@ export class EGE {
             installInnerContents.forEach(file => { /// perform moving...
                 const newPath = path.join(this.egeInstallerDir, file);
                 if (!fs.existsSync(newPath)) {
-                    let srcPath = path.join(validInnerDir, file);
+                    let srcPath = path.join(validInnerDir as string, file);
 
                     if (file === 'demo') { /// fix demo dir
                         const newDemoPath = path.join(srcPath, 'src');
@@ -306,38 +297,51 @@ export class EGE {
         }
     }
 
-    performUnzip(onComplete: Function) {
-
-        decompress(this.egeDownloadedZipFile, {
-            path: this.egeInstallerDir
-        });
-
-        const unzip = new Unzipper(this.egeDownloadedZipFile);
-        unzip.on('extract', () => {
-            console.log("Finished unzipping...");
-
-            /// Check installation, remove inner dir.
-            this.fixInstallDirContents();
-            onComplete();
-        });
-
-        unzip.on('error', (err) => {
-            console.log("Error unzipping");
-            onComplete(err);
-        });
-
+    async performUnzip(onComplete?: (a: string | undefined) => void) {
         this.cleanupInstallDir();
-
         fs.mkdirpSync(this.egeInstallerDir);
 
-        unzip.extract({
-            path: this.egeInstallerDir
-        });
+        const files = await decompress(this.egeDownloadedZipFile as string, this.egeInstallerDir as string);
+
+        let errMsg = undefined;
+
+        if (files && files.length > 0) {
+            this.fixInstallDirContents();
+        } else {
+            errMsg = "Error unzipping";
+        }
+
+        if (onComplete) {
+            onComplete(errMsg);
+        }
+
+
+        // const unzip = new Unzipper(this.egeDownloadedZipFile);
+        // unzip.on('extract', () => {
+        //     console.log("Finished unzipping...");
+
+        //     /// Check installation, remove inner dir.
+        //     this.fixInstallDirContents();
+        //     onComplete();
+        // });
+
+        // unzip.on('error', (err) => {
+        //     console.log("Error unzipping");
+        //     onComplete(err);
+        // });
+
+        // this.cleanupInstallDir();
+
+        // fs.mkdirpSync(this.egeInstallerDir);
+
+        // unzip.extract({
+        //     path: this.egeInstallerDir
+        // });
     }
 
-    getLatestVersion(callback) {
+    getLatestVersion(callback: (a: string | void) => void) {
         /// Never return null when request string content.
-        this.requestUrlData(this.egeDownloadUrl + "?getVersion", null).then(callback, callback);
+        this.requestUrlData(this.egeDownloadUrl + "?getVersion")?.then(callback, callback);
     }
 
     clearPluginCache() {
@@ -349,28 +353,29 @@ export class EGE {
 
         if (this.progressHandle) {
             this.progressHandle.cancel();
-            this.progressHandle = null;
+            delete this.progressHandle;
         }
     }
 
     /**
-     * 
-     * @param {string} url 
-     * @param {string} fileToSave 
-     * @param {function} onComplete response text will be passed when 'fileToSave' is null.
+     * @param redirectCount hidden argument for url redirect.
      * @returns {Promise | null} Promise to download or null if 'fileToSave' is not null but cannot be written to.
      */
-    requestUrlData(url, fileToSave) {
+    requestUrlData(url: string, fileToSave?: string, redirectCount?: number): Promise<string | void> | null {
 
-        /// hidden argument for url redirect.
-        const redirectCount = arguments.length > 2 && arguments[2] ? arguments[2] : 0;
+        if (redirectCount === undefined) {
+            redirectCount = 0;
+        }
 
         if (redirectCount === 0) {
             /// Only validate file in first request.
             if (fileToSave && fileToSave.length != 0 && fs.existsSync(fileToSave)) {
                 /// File must be writable if exists.
-                if (!fs.accessSync(fileToSave, fs.constants.W_OK)) {
-                    vscode.window.showErrorMessage(`EGE: File ${fileToSave} already exists and cannot be overwrite!`);
+                try {
+                    fs.accessSync(fileToSave, fs.constants.W_OK)
+                } catch (e) {
+                    console.error(e);
+                    vscode.window.showErrorMessage(`EGE: File ${fileToSave} already exists and cannot be overwrite! ${e}`);
                     return null;
                 }
             }
@@ -379,14 +384,14 @@ export class EGE {
             return null;
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise<string | void>((resolve, reject) => {
             const request = https.get(url, (response) => {
                 if (response.statusCode === 302 || response.statusCode === 301) {
-                    let redirectLocation = response.headers.location;
+                    let redirectLocation = response.headers.location as string;
                     if (redirectLocation.indexOf('://') < 0) {
                         redirectLocation = path.join(url, redirectLocation);
                     }
-                    const ret = this.requestUrlData(redirectLocation, fileToSave, redirectCount + 1);
+                    const ret = this.requestUrlData(redirectLocation, fileToSave, (redirectCount as number) + 1);
                     if (ret) {
                         ret.then(resolve, reject);
                     }
@@ -425,43 +430,29 @@ export class EGE {
     cleanup() {
         if (this.progressHandle) {
             this.progressHandle.cancel();
-            this.progressHandle = null;
+            delete this.progressHandle;
         }
     }
-}
 
-global.egeInstance = null;
-global.egeExtensionContext = null;
+    //////// static scope //////////
 
-/**
- * @description single instance.
- * @returns {EGE}
- */
-EGE.registerContext = function (context) {
-    global.egeExtensionContext = context;
-}
+    static egeInstance?: EGE;
+    static egeExtensionContext?: vscode.ExtensionContext;
 
-EGE.instance = function () {
-    if (!global.egeInstance && global.egeExtensionContext) {
-        global.egeInstance = new EGE(global.egeExtensionContext);
+    static registerContext(context: vscode.ExtensionContext) {
+        EGE.egeExtensionContext = context;
     }
-    return global.egeInstance;
-}
 
-EGE.unregister = function () {
-    if (global.egeInstance) {
-        global.egeInstance.cleanup();
-        global.egeInstance = null;
+    static unregister() {
+        EGE.egeInstance?.cleanup();
+        delete EGE.egeInstance;
+        delete EGE.egeExtensionContext;
     }
-    EGE.egeExtensionContext = null;
+
+    static instance(): EGE {
+        return EGE.egeInstance as EGE;
+    }
+
+    static Compilers = compilers.Compilers;
+    static CompilerItem = compilers.CompilerItem;
 }
-
-/**
- * @class {Compilers}
- */
-EGE.Compilers = Compilers;
-
-/**
- * @class {Compilers.CompilerItem}
- */
-EGE.CompilerItem = Compilers.CompilerItem;

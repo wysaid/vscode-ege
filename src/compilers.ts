@@ -133,10 +133,7 @@ export class CompilerItem {
         }
     }
 
-    /**
-     * return {string}
-     */
-    getBuildCommandTool() {
+    getBuildCommandTool(): string | null {
         /// vcvarsall.bat, vcvars32.bat, vcvars64.bat...
         if (!this.path || !fs.existsSync(this.path)) {
             return null;
@@ -197,8 +194,8 @@ export class Compilers {
         });
     }
 
-    setCompiler(compiler: CompilerItem) {
-        if (this.compilers && this.compilers.indexOf(compiler) >= 0) {
+    setCompiler(compiler?: CompilerItem) {
+        if (compiler && this.compilers && this.compilers.indexOf(compiler) >= 0) {
             this.selectedCompiler = compiler;
         } else {
             this.selectedCompiler = null;
@@ -208,11 +205,7 @@ export class Compilers {
         }
     }
 
-    /**
-     * @description 自动检查编译器
-     * @return {CompilerItem[]}
-     */
-    detectCompiler() {
+    detectCompiler(): CompilerItem[] {
         if (this.compilers == null || this.compilers.length === 0) {
             this.compilers = [];
 
@@ -243,12 +236,6 @@ export class Compilers {
         return this.compilers;
     }
 
-    /**
-     * 
-     * @param {CompilerItem} selectedCompiler 
-     * @param {string} installationPath 
-     * @param {function} onComplete 
-     */
     performInstall(selectedCompiler: CompilerItem, installationPath: string, onComplete?: Function) {
 
         if (selectedCompiler) {

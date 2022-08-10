@@ -10,7 +10,7 @@ import fs = require('fs-extra');
 import os = require('os');
 // import * as Unzipper from 'decompress-zip';
 import decompress = require('decompress');
-import { RequestMsg } from './RequestMsg';
+import { RequestMsg } from './msg';
 import compilers = require('./compilers');
 
 export class EGE {

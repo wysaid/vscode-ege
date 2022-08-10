@@ -37,3 +37,7 @@ You can define some options like below:
   - Support single file compile & run
   - Support `Visual Studio` template generation.
   - Support CMake template generation.
+
+- Platform:
+  - Windows 10 and later
+  - MacOS via WINE

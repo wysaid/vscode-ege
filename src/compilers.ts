@@ -237,6 +237,10 @@ export class Compilers {
                 return value;
             });
         }
+        this.compilers.map((value: CompilerItem, index: number) => {
+            value.label = `${index}. ${value.label}`;
+            return value;
+        });
         return this.compilers;
     }
 

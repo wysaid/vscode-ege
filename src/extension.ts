@@ -46,10 +46,6 @@ function activate(context: vscode.ExtensionContext) {
 		}
 
 		const egeInstance = EGE.instance();
-
-		/**
-		 * @type {SingleFileBuilder}
-		 */
 		const builder = SingleFileBuilder.instance();
 
 		if (fs.existsSync(fileToRun)) {

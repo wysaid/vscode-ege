@@ -1,5 +1,5 @@
 /**
- * Author: wysaid
+ * @author: wysaid
  * Date: 2022-1-25
  */
 
@@ -30,6 +30,6 @@ export abstract class SingleFileBuilder {
     constructor() {
     }
 
-    abstract buildCurrentActiveFile(fileToRun: string): void; 
+    abstract buildCurrentActiveFile(fileToRun: string): void;
     abstract release(): void;
 }

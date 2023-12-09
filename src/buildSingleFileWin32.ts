@@ -15,15 +15,12 @@ import { SingleFileBuilder } from './buildSingleFile';
 
 export class SingleFileBuilderWin32 extends SingleFileBuilder {
 
-    buildFiles: string[];
-
     buildSuccessAtLeaseOnce = false;
 
     outputChannel?: vscode.OutputChannel;
 
     constructor() {
         super();
-        this.buildFiles = [];
     }
 
     buildCurrentActiveFile(fileToRun: string) {

@@ -160,7 +160,7 @@ export class SingleFileBuilder {
                 setTimeout(() => {
                     /// dispose right now.
                     const folderName = path.dirname(exeName);
-                    childProcess.exec(`cd ${folderName} && start ${exeName}`);
+                    childProcess.exec(`cd ${folderName} && start cmd /C "${exeName}"`);
                 }, 500);
             }
             outputChannel.show();

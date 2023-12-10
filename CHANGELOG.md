@@ -4,6 +4,10 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.2.1
+
+- 单文件编译支持 debian/ubuntu, 同时内置对应的静态库.
+
 ## 0.2.0
 
 - 重构基本代码结构, 将大量的 callback 传入参数改为 async/await.

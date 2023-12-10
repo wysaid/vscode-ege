@@ -4,7 +4,10 @@
  */
 
 import { SingleFileBuilder } from "./SingleFileBuilder";
+import { SingleFileBuilderUnix } from "./buildSingleFileUnix";
 import { SingleFileBuilderWin32 } from "./buildSingleFileWin32";
+import { ege } from "./ege";
+import { isMacOS, isWindows } from "./utils";
 
 /// 编译单个文件
 
@@ -13,10 +16,13 @@ let egeBuilderInstance: SingleFileBuilder | undefined;
 
 export function singleFileBuilderInstance(): SingleFileBuilder {
     if (!egeBuilderInstance) {
-        if (process.platform === 'win32') {
+        if (isWindows()) {
             egeBuilderInstance = new SingleFileBuilderWin32();
+        } else if (isMacOS()) {
+            egeBuilderInstance = new SingleFileBuilderUnix();
         } else {
-            throw new Error("EGE: Unsupported platform: " + process.platform);
+            ege.printError("EGE: Unsupported platform!");
+            throw new Error("Unsupported platform!");
         }
     }
     return egeBuilderInstance;

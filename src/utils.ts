@@ -89,7 +89,7 @@ export function isMacOS(): boolean {
 
 export function whereis(name: string): string | null {
     try {
-        const ret = cp.execSync((os.platform() === "win32" ? "where " : "which ") + name).toString();
+        const ret = cp.execSync((os.platform() === "win32" ? "where " : "which ") + name).toString()?.trim();
         if (ret && ret.length > 0) {
             if (isWindows()) {
                 return ret.split('\r\n')[0];

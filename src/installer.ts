@@ -13,6 +13,7 @@ import decompress = require('decompress');
 import { RequestMsg } from './msg';
 import compilers = require('./compilers');
 import { ege } from './ege';
+import { isWindows } from './utils';
 
 interface RequestUrlDataResult {
     content?: string;
@@ -62,39 +63,43 @@ export class EGEInstaller {
 
     async performInstall(needDownload?: boolean): Promise<boolean | undefined> {
         if (fs.existsSync(this.egeInstallerDir)) {
-            const quickPicks = [
-                {
-                    label: "Use builtin EGE(20.08)",
-                    description: "使用本插件内置的EGE(20.08)完成安装 (推荐)",
-                    picked: true
-                },
-                {
-                    label: "Download the latest version from https://xege.org",
-                    description: "从官网下载最新版本并安装",
-                    picked: false
-                }];
+            if (isWindows()) {
+                const quickPicks = [
+                    {
+                        label: "Use builtin EGE(20.08)",
+                        description: "使用本插件内置的EGE(20.08)完成安装 (推荐)",
+                        picked: true
+                    },
+                    {
+                        label: "Download the latest version from https://xege.org",
+                        description: "从官网下载最新版本并安装",
+                        picked: false
+                    }];
 
-            const value = await vscode.window.showQuickPick(quickPicks, {
-                title: "EGE: Existing installation detected, choose actions you want",
-                canPickMany: false
-            });
+                const value = await vscode.window.showQuickPick(quickPicks, {
+                    title: "EGE: Existing installation detected, choose actions you want",
+                    canPickMany: false
+                });
 
-            if (value) {
-                const index = quickPicks.indexOf(value);
+                if (value) {
+                    const index = quickPicks.indexOf(value);
 
-                if (index >= 0) {
-                    this.clearPluginCache();
+                    if (index >= 0) {
+                        this.clearPluginCache();
 
-                    /// pass true to trigger download.
-                    await this.performInstall(index === 1);
+                        /// pass true to trigger download.
+                        await this.performInstall(index === 1);
+                    } else {
+                        console.log("EGE: PerformInstall cancelled");
+                        return;
+                    }
                 } else {
-                    console.log("EGE: PerformInstall cancelled");
-                    return;
+                    ege.showInfoBox("EGE: Install cancelled");
                 }
+                return;
             } else {
-                ege.showInfoBox("EGE: Install cancelled");
+                ege.printInfo("EGE: do builtin install on non-windows platforms...");
             }
-            return;
         }
 
         if (this.progressHandle && this.progressHandle.progressInstance) {
@@ -137,7 +142,15 @@ export class EGEInstaller {
                 }
             } else {
                 fs.mkdirpSync(this.egeInstallerDir);
-                fs.copyFileSync(this.egeBundleDir, this.egeInstallerDir);
+                console.assert(fs.existsSync(this.egeBundleDir), "EGE: builtin bundle not found!");
+                fs.copySync(this.egeBundleDir, this.egeInstallerDir, { overwrite: true });
+                if (isWindows()) {
+                    await this.performCompilerInstallation();
+                }
+            }
+
+            if (this.progressHandle) {
+                this.progressHandle.resolve();
             }
         };
 

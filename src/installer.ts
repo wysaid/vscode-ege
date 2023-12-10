@@ -184,7 +184,7 @@ export class EGEInstaller {
 
     async checkExistingDownload(): Promise<boolean> {
         const v = await this.getLatestVersion();
-        if (!v?.length) {
+        if (v?.length) {
             /// 检查对应版本号的文件是否存在.
             this.egeLatestVersion = v;
             this.egeDownloadedZipFile = this.egeDownloadDir + `/ege_${v}.zip`;

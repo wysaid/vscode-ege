@@ -109,7 +109,7 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         });
 
         if (result?.exitCode !== 0) {
-            vscode.window.showErrorMessage("EGE: Build Failed!");
+            ege.showErrorBox("EGE: Build Failed!");
 
             if (!this.buildSuccessAtLeaseOnce) {
                 /// 如果从未成功过, 那么每次都要重新选一下编译器.

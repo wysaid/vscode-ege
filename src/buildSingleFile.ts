@@ -7,7 +7,7 @@ import { SingleFileBuilder } from "./SingleFileBuilder";
 import { SingleFileBuilderUnix } from "./buildSingleFileUnix";
 import { SingleFileBuilderWin32 } from "./buildSingleFileWin32";
 import { ege } from "./ege";
-import { isMacOS, isWindows } from "./utils";
+import { isDebian, isMacOS, isWindows } from "./utils";
 
 /// 编译单个文件
 
@@ -18,7 +18,7 @@ export function singleFileBuilderInstance(): SingleFileBuilder {
     if (!egeBuilderInstance) {
         if (isWindows()) {
             egeBuilderInstance = new SingleFileBuilderWin32();
-        } else if (isMacOS()) {
+        } else if (isMacOS() || isDebian()) {
             egeBuilderInstance = new SingleFileBuilderUnix();
         } else {
             ege.printError("EGE: Unsupported platform!");

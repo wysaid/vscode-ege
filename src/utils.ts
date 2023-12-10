@@ -87,6 +87,10 @@ export function isMacOS(): boolean {
     return os.platform() === "darwin";
 }
 
+export function isDebian(): boolean {
+    return os.platform() === "linux" && fs.existsSync("/etc/debian_version");
+}
+
 export function whereis(name: string): string | null {
     try {
         const ret = cp.execSync((os.platform() === "win32" ? "where " : "which ") + name).toString()?.trim();

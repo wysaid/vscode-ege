@@ -5,7 +5,7 @@
 
 import { SingleFileBuilder } from "./SingleFileBuilder";
 import { ege } from "./ege";
-import { asyncRunShellCommand, isMacOS, whereis } from "./utils";
+import { asyncRunShellCommand, isDebian, isMacOS, whereis } from "./utils";
 import * as vscode from 'vscode';
 import * as fs from 'fs-extra';
 import path from "path";
@@ -24,6 +24,8 @@ export class SingleFileBuilderUnix extends SingleFileBuilder {
         super();
         if (isMacOS()) {
             this.osLibDir = "macOS";
+        } else if (isDebian()) {
+            this.osLibDir = "mingw-w64-debian";
         } else {
             this.osLibDir = ""; /// @TODO: linux
         }

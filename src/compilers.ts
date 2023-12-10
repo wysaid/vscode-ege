@@ -228,7 +228,8 @@ export class Compilers {
                 }
             }
 
-            const quickPickTitle = [TYPE_DEV_CPP, TYPE_MINGW64, TYPE_CODE_BLOCKS];
+            // const quickPickTitle = [TYPE_DEV_CPP, TYPE_MINGW64, TYPE_CODE_BLOCKS];
+            const quickPickTitle: string[] = [];
             quickPickTitle.forEach(v => {
                 (this.compilers as Array<CompilerItem>).push(new CompilerItem(v));
             });

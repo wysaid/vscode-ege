@@ -3,7 +3,7 @@
 
 import vscode = require('vscode');
 import fs = require('fs-extra');
-import { EGE } from './ege';
+import { EGEInstaller } from './installer';
 import { SingleFileBuilder } from './buildSingleFile';
 
 import utils = require('./utils')
@@ -14,14 +14,14 @@ function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "ege" is now active!');
 
-	EGE.registerContext(context);
+	EGEInstaller.registerContext(context);
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setupProject', () => {
 		vscode.window.showInformationMessage("EGE: Setup-project not implemented. Do it later...\n");
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setupGlobal', () => {
-		EGE.instance().performInstall();
+		EGEInstaller.instance().performInstall();
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', (runPath) => {
@@ -45,7 +45,7 @@ function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		const egeInstance = EGE.instance();
+		const egeInstance = EGEInstaller.instance();
 		const builder = SingleFileBuilder.instance();
 
 		if (fs.existsSync(fileToRun)) {
@@ -77,14 +77,14 @@ function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.cleanupCaches', () => {
-		EGE.instance().clearPluginCache();
+		EGEInstaller.instance().clearPluginCache();
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.openCacheDir', () => {
-		if (EGE.instance().egeInstallerDir && fs.existsSync(EGE.instance().egeInstallerDir)) {
-			utils.openDirectoryInFileExplorer(EGE.instance().egeInstallerDir);
+		if (EGEInstaller.instance().egeInstallerDir && fs.existsSync(EGEInstaller.instance().egeInstallerDir)) {
+			utils.openDirectoryInFileExplorer(EGEInstaller.instance().egeInstallerDir);
 		} else {
-			vscode.window.showErrorMessage(`EGE: Cache dir ${EGE.instance().egeInstallerDir} does not exist.`)
+			vscode.window.showErrorMessage(`EGE: Cache dir ${EGEInstaller.instance().egeInstallerDir} does not exist.`)
 		}
 	}));
 }
@@ -92,7 +92,7 @@ function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 function deactivate() {
 	/// cleanup
-	EGE.unregister();
+	EGEInstaller.unregister();
 	SingleFileBuilder.unregister();
 }
 

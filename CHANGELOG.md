@@ -4,6 +4,11 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.2.0
+
+- 重构基本代码结构, 将大量的 callback 传入参数改为 async/await.
+- 基于 wine64 + mingw-w64, 支持 MacOS 编译以及运行.
+
 ## 0.1.6
 
 - Support paths with space

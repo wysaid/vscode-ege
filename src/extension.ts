@@ -3,10 +3,11 @@
 
 import vscode = require('vscode');
 import fs = require('fs-extra');
-import {EGE} from './ege';
-import { SingleFileBuilder } from './buildSingleFile';
+import { EGEInstaller } from './installer';
+import { buildCurrentActiveFile, unregisterSingleFileBuilder } from './buildSingleFile';
 
 import utils = require('./utils')
+import { ege } from './ege';
 
 function activate(context: vscode.ExtensionContext) {
 
@@ -14,17 +15,17 @@ function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "ege" is now active!');
 
-	EGE.registerContext(context);
+	EGEInstaller.registerContext(context);
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setupProject', () => {
 		vscode.window.showInformationMessage("EGE: Setup-project not implemented. Do it later...\n");
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setupGlobal', () => {
-		EGE.instance().performInstall();
+		EGEInstaller.instance().performInstall();
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', (runPath) => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', async (runPath) => {
 		/// Watch the file and trigger build when changed.
 		let fileToRun = runPath;
 		if (!fileToRun || !fs.existsSync(fileToRun)) {
@@ -45,12 +46,7 @@ function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		const egeInstance = EGE.instance();
-
-		/**
-		 * @type {SingleFileBuilder}
-		 */
-		const builder = SingleFileBuilder.instance();
+		const egeInstance = EGEInstaller.instance();
 
 		if (fs.existsSync(fileToRun)) {
 			/// perform build and run
@@ -59,16 +55,14 @@ function activate(context: vscode.ExtensionContext) {
 				if (!utils.validateInstallationOfDirectory(egeInstance.egeInstallerDir)) {
 					vscode.window.showWarningMessage("EGE: No installation found, performing initialization. Please try again...");
 					/// 没有执行过安装, 执行一次.
-					egeInstance.egeDownloadedZipFile = egeInstance.egeBundledZip;
-					egeInstance.performUnzip((err) => {
-						if (err) {
-							vscode.window.showErrorMessage("EGE: perform unzip failed: " + err);
-						} else {
-							builder?.buildCurrentActiveFile(fileToRun);
-						}
-					});
+					egeInstance.egeDownloadedZipFile = undefined;
+					if (await egeInstance.performInstall()) {
+						buildCurrentActiveFile(fileToRun);
+					} else {
+						ege.printError("EGE: perform unzip failed!!");
+					}
 				} else {
-					builder?.buildCurrentActiveFile(fileToRun);
+					buildCurrentActiveFile(fileToRun);
 				}
 			}
 		} else {
@@ -81,14 +75,14 @@ function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.cleanupCaches', () => {
-		EGE.instance().clearPluginCache();
+		EGEInstaller.instance().clearPluginCache();
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.openCacheDir', () => {
-		if (EGE.instance().egeInstallerDir && fs.existsSync(EGE.instance().egeInstallerDir)) {
-			utils.openDirectoryInFileExplorer(EGE.instance().egeInstallerDir);
+		if (EGEInstaller.instance().egeInstallerDir && fs.existsSync(EGEInstaller.instance().egeInstallerDir)) {
+			utils.openDirectoryInFileExplorer(EGEInstaller.instance().egeInstallerDir);
 		} else {
-			vscode.window.showErrorMessage(`EGE: Cache dir ${EGE.instance().egeInstallerDir} does not exist.`)
+			vscode.window.showErrorMessage(`EGE: Cache dir ${EGEInstaller.instance().egeInstallerDir} does not exist.`)
 		}
 	}));
 }
@@ -96,8 +90,8 @@ function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 function deactivate() {
 	/// cleanup
-	EGE.unregister();
-	SingleFileBuilder.unregister();
+	EGEInstaller.unregister();
+	unregisterSingleFileBuilder();
 }
 
 module.exports = {

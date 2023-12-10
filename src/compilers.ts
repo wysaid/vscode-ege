@@ -11,6 +11,7 @@ import path = require('path');
 import fs = require('fs-extra');
 import utils = require('./utils');
 import glob = require('glob');
+import { ege } from './ege';
 
 const VS_WHERE = 'C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe';
 
@@ -177,15 +178,27 @@ export class Compilers {
         this.extensionContext = context;
     }
 
-    chooseCompilerByUser() {
+    async chooseCompilerByUser(): Promise<CompilerItem | undefined> {
         const platformName = os.platform();
         if (platformName !== 'win32' && platformName !== 'cygwin') { /// 目前仅支持 windows
             vscode.window.showErrorMessage(`EGE: Platform ${platformName} is not supported by now!`)
             console.log(`EGE: Platform ${platformName} is not supported by now!`);
-            return null;
+            return;
         }
 
         const comp = this.detectCompiler();
+
+        if (comp.length === 0) {
+            if (utils.isWindows()) {
+                ege.showErrorBox("未找到可支持的编译器! ege vscode plugin 仅目前支持 Visual Studio (2017/2019/2022 或 更新版本), 请安装后重启", "OK");
+            } else {
+                ege.showErrorBox("未找到可支持的编译器! ege vscode plugin 需要 mingw-w64 的支持, 请安装后重启", "OK");
+            }
+            return;
+        } else if (comp.length === 1) {
+            /// only one compiler, choose it.
+            return comp[0];
+        }
 
         return vscode.window.showQuickPick(comp, {
             title: "EGE: Choose the specific compiler to install.",
@@ -228,11 +241,20 @@ export class Compilers {
                 }
             }
 
-            const quickPickTitle = [TYPE_DEV_CPP, TYPE_MINGW64, TYPE_CODE_BLOCKS];
+            // const quickPickTitle = [TYPE_DEV_CPP, TYPE_MINGW64, TYPE_CODE_BLOCKS];
+            const quickPickTitle: string[] = [];
             quickPickTitle.forEach(v => {
                 (this.compilers as Array<CompilerItem>).push(new CompilerItem(v));
             });
+            this.compilers.map((value: CompilerItem, index: number) => {
+                value.label = `${index}. ${value.label}`;
+                return value;
+            });
         }
+        this.compilers.map((value: CompilerItem, index: number) => {
+            value.label = `${index}. ${value.label}`;
+            return value;
+        });
         return this.compilers;
     }
 
@@ -280,8 +302,6 @@ export class Compilers {
             if (!c.includeDir || !c.libDir) {
                 c.guessCompilerEnvPath(c.path);
             }
-
-            const installerIncludePath = this.installerIncludePath as string;
 
             if (c.includeDir && c.libDir) {
                 this.installerIncludePath = path.join(egeInstallerDir, 'include');

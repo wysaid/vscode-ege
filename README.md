@@ -5,6 +5,13 @@ A VSCode plugin to help the configuration of [ege](https://xege.org). Enjoy it!
 ## Features
 
 - Generate `EGE Projects` with single click
+- Build and run single cpp files with EGE support.(`graphics.h`)
+
+## Deps
+
+- Windows: Visual Studio 2017/2019/2022/20XX+
+- MacOS: `mingw-w64`, `wine-stable` (wine64)
+- Linux: `mingw-w64`, `wine64`
 
 ## Install
 

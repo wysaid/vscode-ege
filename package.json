@@ -82,14 +82,14 @@
 				},
 				{
 					"command": "ege.buildAndRunCurrentFile",
-					"when": "!inOutput && config.ege.showEditorContextMenu",
+					"when": "!inOutput && config.ege.showEditorContextMenu && resourceExtname == .cpp",
 					"group": "1_modification"
 				}
 			],
 			"explorer/context": [
 				{
 					"command": "ege.setupProject",
-					"when": "config.ege.explorerContextMenu",
+					"when": "config.ege.explorerContextMenu && explorerResourceIsFolder",
 					"group": "1_modification"
 				}
 			]

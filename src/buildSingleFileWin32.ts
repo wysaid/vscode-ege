@@ -5,19 +5,18 @@
 
 import vscode = require('vscode');
 import childProcess = require('child_process')
-import { EGE } from './ege';
+import { EGEInstaller } from './installer';
 import path = require('path');
 import iconv = require('iconv-lite')
 import fs = require('fs-extra');
 import { SingleFileBuilder } from './buildSingleFile';
+import { ege } from './ege';
 
 /// 编译单个文件
 
 export class SingleFileBuilderWin32 extends SingleFileBuilder {
 
     buildSuccessAtLeaseOnce = false;
-
-    outputChannel?: vscode.OutputChannel;
 
     constructor() {
         super();
@@ -26,21 +25,19 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
     buildCurrentActiveFile(fileToRun: string) {
         const activeFile = fileToRun || vscode.window.activeTextEditor?.document?.fileName;
         if (activeFile) {
-            const ege = EGE.instance();
-            const comp = ege.getCompilerHandle();
+            const egeInstaller = EGEInstaller.instance();
+            const comp = egeInstaller.getCompilerHandle();
 
             if (!comp.selectedCompiler) {
-                if (!this.outputChannel) {
-                    this.outputChannel = vscode.window.createOutputChannel('EGE');
-                }
 
-                this.outputChannel.appendLine("EGE: Looking for compiler...");
+
+                ege.printInfo("EGE: Looking for compiler...");
 
                 comp.chooseCompilerByUser()?.then(c => {
                     comp.setCompiler(c);
                     if (comp.selectedCompiler) {
-                        this.outputChannel?.appendLine("EGE: Choosed compiler " + comp.selectedCompiler.path);
-                        this.outputChannel?.appendLine("EGE: Performing build...");
+                        ege.printInfo("EGE: Choosed compiler " + comp.selectedCompiler.path);
+                        ege.printInfo("EGE: Performing build...");
                         setTimeout(() => {
                             this.buildCurrentActiveFile(activeFile);
                         }, 100);
@@ -59,16 +56,11 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         }
     }
 
-    performBuildWithVisualStudio(filePath: string, compilerItem: EGE.CompilerItem): void {
+    performBuildWithVisualStudio(filePath: string, compilerItem: EGEInstaller.CompilerItem): void {
 
-        if (!this.outputChannel) {
-            this.outputChannel = vscode.window.createOutputChannel('EGE');
-        }
-        const outputChannel = this.outputChannel;
-
-        outputChannel.appendLine(`EGE: Performing build with Visual Studio "${compilerItem.path}", file: "${filePath}"`);
+        ege.printInfo(`EGE: Performing build with Visual Studio "${compilerItem.path}", file: "${filePath}"`);
         const cmdTool = compilerItem.getBuildCommandTool();
-        const installerDir = EGE.instance()?.egeInstallerDir;
+        const installerDir = EGEInstaller.instance()?.egeInstallerDir;
         let extraIncludeDir = null;
         let extraLibsDir: string | null = null;
 
@@ -111,8 +103,7 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd ${extraIncludeCommand} /std:${cppStandard} /EHsc "${filePath}" /link ${extraLibsCommand}`;
 
         const logMsg = `EGE: Perform build with command: ${buildCommand}`;
-        outputChannel.appendLine(logMsg);
-        outputChannel.show();
+        ege.printWarning(logMsg);
 
         const proc = childProcess.exec(buildCommand, {
             encoding: 'buffer',
@@ -120,7 +111,7 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         }, (error, outMsg, errMsg) => {
             if (error) {
                 console.log(error.cmd);
-                outputChannel.appendLine(error.cmd as string);
+                ege.printInfo(error.cmd as string);
             }
 
             const msg = outMsg || errMsg;
@@ -128,7 +119,7 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
             if (msg) {
                 /// 转码一下, 避免乱码
                 const gbkResult = iconv.decode(msg, 'gbk');
-                outputChannel.appendLine(gbkResult);
+                ege.printInfo(gbkResult);
             }
         });
 
@@ -138,20 +129,20 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
 
                 if (!this.buildSuccessAtLeaseOnce) {
                     /// 如果从未成功过, 那么每次都要重新选一下编译器.
-                    EGE.instance()?.getCompilerHandle()?.setCompiler(undefined);
+                    EGEInstaller.instance()?.getCompilerHandle()?.setCompiler(undefined);
                 }
             } else {
                 vscode.window.showInformationMessage("EGE: Finish building!");
                 this.buildSuccessAtLeaseOnce = true;
 
-                outputChannel.appendLine("Running " + exeName);
+                ege.printInfo("Running " + exeName);
                 setTimeout(() => {
                     /// dispose right now.
                     const folderName = path.dirname(exeName);
                     childProcess.exec(`cd ${folderName} && start cmd /C "${exeName}"`);
                 }, 500);
             }
-            outputChannel.show();
+            ege.showOutputChannel(false);
 
             // /// 5秒后关闭
             // setTimeout(() => {

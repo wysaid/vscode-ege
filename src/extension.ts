@@ -4,9 +4,10 @@
 import vscode = require('vscode');
 import fs = require('fs-extra');
 import { EGEInstaller } from './installer';
-import { SingleFileBuilder } from './buildSingleFile';
+import { buildCurrentActiveFile, unregisterSingleFileBuilder } from './buildSingleFile';
 
 import utils = require('./utils')
+import { ege } from './ege';
 
 function activate(context: vscode.ExtensionContext) {
 
@@ -24,7 +25,7 @@ function activate(context: vscode.ExtensionContext) {
 		EGEInstaller.instance().performInstall();
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', (runPath) => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', async (runPath) => {
 		/// Watch the file and trigger build when changed.
 		let fileToRun = runPath;
 		if (!fileToRun || !fs.existsSync(fileToRun)) {
@@ -46,7 +47,6 @@ function activate(context: vscode.ExtensionContext) {
 		}
 
 		const egeInstance = EGEInstaller.instance();
-		const builder = SingleFileBuilder.instance();
 
 		if (fs.existsSync(fileToRun)) {
 			/// perform build and run
@@ -55,16 +55,14 @@ function activate(context: vscode.ExtensionContext) {
 				if (!utils.validateInstallationOfDirectory(egeInstance.egeInstallerDir)) {
 					vscode.window.showWarningMessage("EGE: No installation found, performing initialization. Please try again...");
 					/// 没有执行过安装, 执行一次.
-					egeInstance.egeDownloadedZipFile = egeInstance.egeBundledZip;
-					egeInstance.performUnzip((err) => {
-						if (err) {
-							vscode.window.showErrorMessage("EGE: perform unzip failed: " + err);
-						} else {
-							builder?.buildCurrentActiveFile(fileToRun);
-						}
-					});
+					egeInstance.egeDownloadedZipFile = undefined;
+					if (await egeInstance.performInstall()) {
+						buildCurrentActiveFile(fileToRun);
+					} else {
+						ege.printError("EGE: perform unzip failed!!");
+					}
 				} else {
-					builder?.buildCurrentActiveFile(fileToRun);
+					buildCurrentActiveFile(fileToRun);
 				}
 			}
 		} else {
@@ -93,7 +91,7 @@ function activate(context: vscode.ExtensionContext) {
 function deactivate() {
 	/// cleanup
 	EGEInstaller.unregister();
-	SingleFileBuilder.unregister();
+	unregisterSingleFileBuilder();
 }
 
 module.exports = {

@@ -12,6 +12,12 @@ import os = require('os');
 import decompress = require('decompress');
 import { RequestMsg } from './msg';
 import compilers = require('./compilers');
+import { ege } from './ege';
+
+interface RequestUrlDataResult {
+    content?: string;
+    error?: string;
+}
 
 export class EGEInstaller {
     pluginContext: vscode.ExtensionContext;
@@ -27,8 +33,7 @@ export class EGEInstaller {
     egeDemoDir: string;
 
     /// builtin bundles
-    egeBundleDir?: string;
-    egeBundledZip?: string;
+    egeBundleDir: string;
 
     progressHandle?: RequestMsg;
     installationCancelled: boolean = false;
@@ -47,20 +52,16 @@ export class EGEInstaller {
         this.egeDemoDir = path.join(this.egeInstallerDir, "demo");
 
         /// try to extract 
-        this.egeBundleDir = path.join(__dirname, "../bundle");
-        this.egeBundledZip = path.join(this.egeBundleDir, "ege_bundle.zip");
-        if (fs.existsSync(this.egeBundleDir) && fs.existsSync(this.egeBundledZip)) {
-            console.log("EGE: Find builtin bundle at: " + this.egeBundledZip);
+        this.egeBundleDir = path.join(__dirname, "../bundle/ege_bundle");
+        if (fs.existsSync(this.egeBundleDir) && fs.existsSync(path.join(this.egeBundleDir, "include", "graphics.h"))) {
+            console.log("EGE: Find builtin bundle at: " + this.egeBundleDir);
         } else {
-            vscode.window.showErrorMessage("EGE: builtin bundle not found at: " + this.egeBundledZip);
+            vscode.window.showErrorMessage("EGE: builtin bundle not found at: " + this.egeBundleDir);
         }
-
     }
 
-    performInstall(needDownload?: boolean) {
-
+    async performInstall(needDownload?: boolean): Promise<boolean | undefined> {
         if (fs.existsSync(this.egeInstallerDir)) {
-
             const quickPicks = [
                 {
                     label: "Use builtin EGE(20.08)",
@@ -72,34 +73,32 @@ export class EGEInstaller {
                     description: "从官网下载最新版本并安装",
                     picked: false
                 }];
-            vscode.window.showQuickPick(quickPicks, {
+
+            const value = await vscode.window.showQuickPick(quickPicks, {
                 title: "EGE: Existing installation detected, choose actions you want",
                 canPickMany: false
-            }).then(value => {
-                if (value) {
-                    const index = quickPicks.indexOf(value);
-
-                    if (index >= 0) {
-                        this.clearPluginCache();
-
-                        /// pass true to trigger download.
-                        this.performInstall(index === 1);
-                    } else {
-                        console.log("EGE: PerformInstall cancelled");
-                        return;
-                    }
-                } else {
-                    vscode.window.showInformationMessage("EGE: Install cancelled");
-                }
-            }, rejectReason => {
-                vscode.window.showInformationMessage("EGE: Install cancelled: " + rejectReason)
             });
 
+            if (value) {
+                const index = quickPicks.indexOf(value);
+
+                if (index >= 0) {
+                    this.clearPluginCache();
+
+                    /// pass true to trigger download.
+                    await this.performInstall(index === 1);
+                } else {
+                    console.log("EGE: PerformInstall cancelled");
+                    return;
+                }
+            } else {
+                ege.showInfoBox("EGE: Install cancelled");
+            }
             return;
         }
 
         if (this.progressHandle && this.progressHandle.progressInstance) {
-            vscode.window.showErrorMessage("EGE: Last progress not finished! Waiting... You can reload this window if you're waiting too long.");
+            ege.showErrorBox("EGE: Last progress not finished! Waiting... You can reload this window if you're waiting too long.");
             return;
         }
 
@@ -108,7 +107,7 @@ export class EGEInstaller {
         }
 
         if (!fs.existsSync) {
-            vscode.window.showErrorMessage("EGE: Create tmp directory failed!\n");
+            ege.showErrorBox("EGE: Create tmp directory failed!\n");
             return false;
         }
 
@@ -122,79 +121,70 @@ export class EGEInstaller {
             }, 1);
         });
 
-        const nextStep = () => {
-            this.progressHandle?.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
-            this.performUnzip((err: undefined | string) => {
-                if (err) {
-                    console.error("ege: " + err);
+        const nextStep = async () => {
+            if (this.egeDownloadedZipFile && fs.existsSync(this.egeDownloadedZipFile)) {
+                this.progressHandle?.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
+                if (await this.performUnzip()) {
+                    this.progressHandle?.resolve();
+                    vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
+                    await this.performCompilerInstallation();
+                } else {
                     vscode.window.showErrorMessage(`EGE: unzip ${this.egeDownloadedZipFile} failed!`);
                     fs.removeSync(this.egeInstallerDir);
                     if (this.progressHandle) {
                         this.progressHandle.reject();
                     }
-                } else {
-                    this.progressHandle?.resolve();
-                    vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
-                    setTimeout(() => {
-                        this.performCompilerInstallation();
-                    }, 1);
                 }
-            });
+            } else {
+                fs.mkdirpSync(this.egeInstallerDir);
+                fs.copyFileSync(this.egeBundleDir, this.egeInstallerDir);
+            }
         };
 
         if (needDownload) {
             /// Check for the latest version.
-            this.checkExistingDownload((exists) => {
-                if (!exists) {
-                    if (!this.egeDownloadedZipFile) {
-                        vscode.window.showErrorMessage("EGE: Get latest ege version failed! Make sure you're online!");
-                        this.progressHandle?.reject();
-                        return;
-                    }
+            const exists = await this.checkExistingDownload();
 
-                    this.progressHandle?.updateProgress("Downloading " + this.egeDownloadUrl);
-                    this.performDownload((err) => {
-                        if (err) {
-                            console.error("Error downloading: " + err);
-                            vscode.window.showErrorMessage("EGE: Download ege zip failed!!");
-                        } else {
-                            nextStep();
-                        }
-                    });
-                } else {
-                    vscode.window.showInformationMessage("EGE is already downloaded, skip downloading");
-                    nextStep();
+            if (!exists) {
+                if (!this.egeDownloadedZipFile) {
+                    vscode.window.showErrorMessage("EGE: Get latest ege version failed! Make sure you're online!");
+                    this.progressHandle?.reject();
+                    return;
                 }
-            });
+
+                this.progressHandle?.updateProgress("Downloading " + this.egeDownloadUrl);
+                if (await this.performDownload()) {
+                    await nextStep();
+                } else {
+                    console.error("Error downloading!");
+                }
+            } else {
+                vscode.window.showInformationMessage("EGE is already downloaded, skip downloading");
+                await nextStep();
+            }
         } else {
             /// extract builtin bundle.
-            this.egeDownloadedZipFile = this.egeBundledZip;
-            nextStep();
+            this.egeDownloadedZipFile = undefined;
+            await nextStep();
         }
     }
 
-    checkExistingDownload(callback: (a: boolean) => void) {
-        this.getLatestVersion((v) => {
-            if (v && v.length > 0) {
-                /// 检查对应版本号的文件是否存在.
-                this.egeLatestVersion = v;
-                this.egeDownloadedZipFile = this.egeDownloadDir + `/ege_${v}.zip`;
-                console.log("checkExistingDownload: " + this.egeDownloadedZipFile);
-            } else {
-                delete this.egeDownloadedZipFile;
-            }
-            callback(this.egeDownloadedZipFile != null && fs.existsSync(this.egeDownloadedZipFile));
-        });
-    }
-
-    performDownload(onComplete: (a: string | void) => void) {
-
-        const p = this.requestUrlData(this.egeDownloadUrl, this.egeDownloadedZipFile);
-        if (p) {
-            p.then(onComplete, onComplete);
+    async checkExistingDownload(): Promise<boolean> {
+        const v = await this.getLatestVersion();
+        if (!v?.length) {
+            /// 检查对应版本号的文件是否存在.
+            this.egeLatestVersion = v;
+            this.egeDownloadedZipFile = this.egeDownloadDir + `/ege_${v}.zip`;
+            console.log("checkExistingDownload: " + this.egeDownloadedZipFile);
         } else {
-            onComplete("Error Downloading: " + this.egeDownloadedZipFile);
+            this.egeDownloadedZipFile = undefined;
         }
+        return this.egeDownloadedZipFile != null && fs.existsSync(this.egeDownloadedZipFile);
+    }
+
+    async performDownload(): Promise<boolean> {
+        const ret = await this.requestUrlData(this.egeDownloadUrl, this.egeDownloadedZipFile);
+        return ret.error === undefined;
     }
 
     getCompilerHandle() {
@@ -204,24 +194,17 @@ export class EGEInstaller {
         return this.compilerHandle;
     }
 
-    performCompilerInstallation() {
+    async performCompilerInstallation() {
         const compilerHandle = this.getCompilerHandle();
-        const p = compilerHandle.chooseCompilerByUser();
-        if (p) {
-            p.then(value => {
-                if (value) {
-                    compilerHandle.setCompiler(value);
-                    compilerHandle.performInstall(value, this.egeInstallerDir, () => {
-                        vscode.window.showInformationMessage("EGE: Install finished!");
-                    });
-                } else {
-                    vscode.window.showWarningMessage("EGE: Choosing compiler cancelled!");
-                }
-            }, () => {
-                vscode.window.showWarningMessage("EGE: No compiler choosed.");
+        const value = await compilerHandle.chooseCompilerByUser();
+
+        if (value) {
+            compilerHandle.setCompiler(value);
+            compilerHandle.performInstall(value, this.egeInstallerDir, () => {
+                vscode.window.showInformationMessage("EGE: Install finished!");
             });
         } else {
-            console.error("Platform does not support.")
+            ege.printError("EGE: No compiler choosed.");
         }
     }
 
@@ -296,7 +279,7 @@ export class EGEInstaller {
         }
     }
 
-    async performUnzip(onComplete?: (a: string | undefined) => void) {
+    async performUnzip(): Promise<boolean> {
         this.cleanupInstallDir();
         fs.mkdirpSync(this.egeInstallerDir);
 
@@ -306,41 +289,19 @@ export class EGEInstaller {
 
         if (files && files.length > 0) {
             this.fixInstallDirContents();
+            return true;
         } else {
             errMsg = "Error unzipping";
+            return false;
         }
-
-        if (onComplete) {
-            onComplete(errMsg);
-        }
-
-
-        // const unzip = new Unzipper(this.egeDownloadedZipFile);
-        // unzip.on('extract', () => {
-        //     console.log("Finished unzipping...");
-
-        //     /// Check installation, remove inner dir.
-        //     this.fixInstallDirContents();
-        //     onComplete();
-        // });
-
-        // unzip.on('error', (err) => {
-        //     console.log("Error unzipping");
-        //     onComplete(err);
-        // });
-
-        // this.cleanupInstallDir();
-
-        // fs.mkdirpSync(this.egeInstallerDir);
-
-        // unzip.extract({
-        //     path: this.egeInstallerDir
-        // });
     }
 
-    getLatestVersion(callback: (a: string | void) => void) {
+    async getLatestVersion(): Promise<string | undefined> {
         /// Never return null when request string content.
-        this.requestUrlData(this.egeDownloadUrl + "?getVersion")?.then(callback, callback);
+        const str = await this.requestUrlData(this.egeDownloadUrl + "?getVersion");
+        if (str.content) {
+            return str.content;
+        }
     }
 
     clearPluginCache() {
@@ -360,11 +321,13 @@ export class EGEInstaller {
      * @param redirectCount hidden argument for url redirect.
      * @returns {Promise | null} Promise to download or null if 'fileToSave' is not null but cannot be written to.
      */
-    requestUrlData(url: string, fileToSave?: string, redirectCount?: number): Promise<string | void> | null {
+    requestUrlData(url: string, fileToSave?: string, redirectCount?: number): Promise<RequestUrlDataResult> {
 
         if (redirectCount === undefined) {
             redirectCount = 0;
         }
+
+        let stopReason: string | undefined;
 
         if (redirectCount === 0) {
             /// Only validate file in first request.
@@ -374,26 +337,28 @@ export class EGEInstaller {
                     fs.accessSync(fileToSave, fs.constants.W_OK)
                 } catch (e) {
                     console.error(e);
-                    vscode.window.showErrorMessage(`EGE: File ${fileToSave} already exists and cannot be overwrite! ${e}`);
-                    return null;
+                    stopReason = `EGE: File ${fileToSave} already exists and cannot be overwrite! ${e}`;
                 }
             }
         } else if (redirectCount > 5) {
-            vscode.window.showErrorMessage("Too many redirects, stop!");
-            return null;
+            stopReason = "Too many redirects!";
         }
 
-        return new Promise<string | void>((resolve, reject) => {
+        return new Promise<RequestUrlDataResult>((resolve) => {
+            if (stopReason) {
+                ege.showErrorBox(stopReason);
+                resolve({ error: stopReason });
+                return;
+            }
+
             const request = https.get(url, (response) => {
                 if (response.statusCode === 302 || response.statusCode === 301) {
                     let redirectLocation = response.headers.location as string;
                     if (redirectLocation.indexOf('://') < 0) {
                         redirectLocation = path.join(url, redirectLocation);
                     }
-                    const ret = this.requestUrlData(redirectLocation, fileToSave, (redirectCount as number) + 1);
-                    if (ret) {
-                        ret.then(resolve, reject);
-                    }
+                    const p = this.requestUrlData(redirectLocation, fileToSave, (redirectCount as number) + 1);
+                    p.then(resolve);
                 } else if (response.statusCode === 200) {
                     if (fileToSave) {
                         const writeStream = fs.createWriteStream(fileToSave);
@@ -401,7 +366,7 @@ export class EGEInstaller {
                         response.on('end', () => {
                             writeStream.end();
                             console.log(`Downloading ${url} OK, file: ${fileToSave}`);
-                            resolve();
+                            resolve({});
                         });
                     } else {
                         let strContent = "";
@@ -411,17 +376,16 @@ export class EGEInstaller {
 
                         response.on('end', () => {
                             console.log(`Request url ${url} OK, content: ${strContent}`);
-                            resolve(strContent);
+                            resolve({ content: strContent });
                         });
                     }
                 } else {
                     /// Unexpected err.
-                    reject(`Server respond with ${response.statusCode} - ${response.statusMessage}`);
+                    resolve({ error: `Server respond with ${response.statusCode} - ${response.statusMessage}` });
                 }
             });
             request.on('error', (err) => {
-                console.log(`ege error: ${err}`);
-                reject(err);
+                resolve({ error: `ege error: ${err}` });
             });
         });
     }

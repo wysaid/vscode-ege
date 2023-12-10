@@ -54,7 +54,7 @@ export namespace ege {
     /**
      * @description 在右下角显示一段信息
      */
-    export function showInfo(info: string, ...items: string[]): Thenable<string | undefined> {
+    export function showInfoBox(info: string, ...items: string[]): Thenable<string | undefined> {
         printInfo(msgPrefix + info);
         return vscode.window.showInformationMessage(msgPrefix + info, ...items);
     }
@@ -62,7 +62,7 @@ export namespace ege {
     /**
      * @description 在右下角显示一段错误信息
      */
-    export function showError(error: string, ...items: string[]): Thenable<string | undefined> {
+    export function showErrorBox(error: string, ...items: string[]): Thenable<string | undefined> {
         printError(msgPrefix + error);
         return vscode.window.showErrorMessage(msgPrefix + error, ...items);
     }

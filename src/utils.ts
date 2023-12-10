@@ -9,6 +9,7 @@ import vscode = require('vscode');
 import fs = require('fs-extra');
 import path = require('path');
 import { ege } from './ege';
+import iconv = require('iconv-lite')
 
 const libsDirArray = [
     'graphics.lib',
@@ -123,7 +124,9 @@ export type RunShellOption = {
     noErrorMsg?: boolean;
     useWindowsConsole?: boolean;
     useWindowsPowerShell?: boolean;
-    printMsg?: boolean; /// 如果 printMsg 为 true, 则不会返回 stdout, stderr
+    /// 如果 `{!!printMsg}` 为 true, 则不会返回 stdout, stderr
+    /// 如果 printMsg 为 'GBK', 表示在 windows 下强制使用 GBK 编码输出
+    printMsg?: boolean | 'gbk';
     detach?: boolean;
 };
 
@@ -180,7 +183,7 @@ function createShellRunnerInfo(command: string, args?: string[] | null, shellOpt
         };
 
     } else {
-        ege.showError("Unsupported platform!");
+        ege.showErrorBox("Unsupported platform!");
     }
 
     return result;
@@ -261,6 +264,10 @@ export function convertWindowsPathForShell(path: string, type?: "git-bash" | "ws
     return path;
 }
 
+function shouldConvertToGBK(shellOption?: RunShellOption): boolean {
+    return shellOption?.printMsg === 'gbk' && isWindows();
+}
+
 export function runShellCommand(command: string, args?: string[] | null, shellOption?: RunShellOption): null | ShellResult {
     let result: ShellResult | null = null;
 
@@ -279,10 +286,18 @@ export function runShellCommand(command: string, args?: string[] | null, shellOp
 
         if (shellOption?.printMsg) {
             if (sp.stdout && !shellOption.useBuffer) {
-                ege.printInfo(sp.stdout as string);
+                if (shouldConvertToGBK(shellOption)) {
+                    ege.printInfo(iconv.decode(sp.stdout as Buffer, 'gbk'));
+                } else {
+                    ege.printInfo(sp.stdout as string);
+                }
             }
             if (sp.stderr) {
-                ege.printError(sp.stderr as string);
+                if (shouldConvertToGBK(shellOption)) {
+                    ege.printError(iconv.decode(sp.stderr as Buffer, 'gbk'));
+                } else {
+                    ege.printError(sp.stderr as string);
+                }
             }
         }
 
@@ -323,7 +338,11 @@ export function asyncRunShellCommand(command: string, args?: string[] | null, sh
 
         sp.stdout?.on('data', (data) => {
             if (shellOption?.printMsg) {
-                ege.printInfo(data.toString());
+                if (shouldConvertToGBK(shellOption)) {
+                    ege.printInfo(iconv.decode(data as Buffer, 'gbk'));
+                } else {
+                    ege.printInfo(data.toString());
+                }
             } else {
                 stdout += data.toString();
             }
@@ -331,7 +350,11 @@ export function asyncRunShellCommand(command: string, args?: string[] | null, sh
 
         sp.stderr?.on('data', (data) => {
             if (shellOption?.printMsg) {
-                ege.printError(data.toString());
+                if (shouldConvertToGBK(shellOption)) {
+                    ege.printError(iconv.decode(data as Buffer, 'gbk'));
+                } else {
+                    ege.printError(data.toString());
+                }
             }
             stderr += data.toString();
         });
@@ -345,7 +368,7 @@ export function asyncRunShellCommand(command: string, args?: string[] | null, sh
         });
 
         sp.on('error', (err) => {
-            console.error(`asyncRunShellCommand - ${err} - ${arguments.toString()} - ${shellOption?.cwd}`);
+            ege.printError(`asyncRunShellCommand - ${err} - ${arguments.toString()} - ${shellOption?.cwd}`);
             resolve(null);
         });
 

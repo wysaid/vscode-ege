@@ -3,33 +3,30 @@
  * Date: 2022-1-25
  */
 
+import { SingleFileBuilder } from "./SingleFileBuilder";
 import { SingleFileBuilderWin32 } from "./buildSingleFileWin32";
 
 /// 编译单个文件
 
-export abstract class SingleFileBuilder {
+let egeBuilderInstance: SingleFileBuilder | undefined;
 
-    static egeBuilderInstance?: SingleFileBuilder;
 
-    static instance(): SingleFileBuilder {
-        if (!SingleFileBuilder.egeBuilderInstance) {
-            if (process.platform === 'win32') {
-                SingleFileBuilder.egeBuilderInstance = new SingleFileBuilderWin32();
-            } else {
-                throw new Error("EGE: Unsupported platform: " + process.platform);
-            }
+export function singleFileBuilderInstance(): SingleFileBuilder {
+    if (!egeBuilderInstance) {
+        if (process.platform === 'win32') {
+            egeBuilderInstance = new SingleFileBuilderWin32();
+        } else {
+            throw new Error("EGE: Unsupported platform: " + process.platform);
         }
-        return SingleFileBuilder.egeBuilderInstance;
     }
+    return egeBuilderInstance;
+}
 
-    static unregister(): void {
-        SingleFileBuilder.egeBuilderInstance?.release?.();
-        SingleFileBuilder.egeBuilderInstance = undefined;
-    }
+export function unregisterSingleFileBuilder(): void {
+    egeBuilderInstance?.release?.();
+    egeBuilderInstance = undefined;
+}
 
-    constructor() {
-    }
-
-    abstract buildCurrentActiveFile(fileToRun: string): void;
-    abstract release(): void;
+export function buildCurrentActiveFile(fileToRun: string): Promise<void> {
+    return singleFileBuilderInstance().buildCurrentActiveFile(fileToRun);
 }

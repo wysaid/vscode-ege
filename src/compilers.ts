@@ -177,12 +177,12 @@ export class Compilers {
         this.extensionContext = context;
     }
 
-    chooseCompilerByUser() {
+    async chooseCompilerByUser(): Promise<CompilerItem | undefined> {
         const platformName = os.platform();
         if (platformName !== 'win32' && platformName !== 'cygwin') { /// 目前仅支持 windows
             vscode.window.showErrorMessage(`EGE: Platform ${platformName} is not supported by now!`)
             console.log(`EGE: Platform ${platformName} is not supported by now!`);
-            return null;
+            return undefined;
         }
 
         const comp = this.detectCompiler();
@@ -289,8 +289,6 @@ export class Compilers {
             if (!c.includeDir || !c.libDir) {
                 c.guessCompilerEnvPath(c.path);
             }
-
-            const installerIncludePath = this.installerIncludePath as string;
 
             if (c.includeDir && c.libDir) {
                 this.installerIncludePath = path.join(egeInstallerDir, 'include');

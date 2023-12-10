@@ -9,8 +9,10 @@ import { EGEInstaller } from './installer';
 import path = require('path');
 import iconv = require('iconv-lite')
 import fs = require('fs-extra');
-import { SingleFileBuilder } from './buildSingleFile';
+import { SingleFileBuilder } from './SingleFileBuilder';
 import { ege } from './ege';
+import { asyncRunShellCommand } from './utils';
+import { CompilerItem } from './compilers';
 
 /// 编译单个文件
 
@@ -22,41 +24,36 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         super();
     }
 
-    buildCurrentActiveFile(fileToRun: string) {
+    async buildCurrentActiveFile(fileToRun: string): Promise<void> {
         const activeFile = fileToRun || vscode.window.activeTextEditor?.document?.fileName;
         if (activeFile) {
             const egeInstaller = EGEInstaller.instance();
             const comp = egeInstaller.getCompilerHandle();
 
             if (!comp.selectedCompiler) {
-
-
                 ege.printInfo("EGE: Looking for compiler...");
-
-                comp.chooseCompilerByUser()?.then(c => {
-                    comp.setCompiler(c);
-                    if (comp.selectedCompiler) {
-                        ege.printInfo("EGE: Choosed compiler " + comp.selectedCompiler.path);
-                        ege.printInfo("EGE: Performing build...");
-                        setTimeout(() => {
-                            this.buildCurrentActiveFile(activeFile);
-                        }, 100);
-                    }
-                });
+                const c = await comp.chooseCompilerByUser();
+                comp.setCompiler(c);
+                /// eslint 会在非 windows 系统里面判定 comp.selectedCompiler 永远为 null, 所以这里使用 as any.
+                const compilerItem: CompilerItem = comp.selectedCompiler as any;
+                if (compilerItem) {
+                    ege.printInfo("EGE: Choosed compiler " + compilerItem.path);
+                    ege.printInfo("EGE: Performing build...");
+                    await this.buildCurrentActiveFile(activeFile);
+                }
             } else {
                 const compilerItem = comp.selectedCompiler;
                 if (compilerItem.path) {
                     /// 当前仅支持 visual studio.
-                    this.performBuildWithVisualStudio(activeFile, compilerItem);
+                    await this.performBuildWithVisualStudio(activeFile, compilerItem);
                 }
             }
-
         } else {
             vscode.window.showErrorMessage("EGE: No active file!");
         }
     }
 
-    performBuildWithVisualStudio(filePath: string, compilerItem: EGEInstaller.CompilerItem): void {
+    async performBuildWithVisualStudio(filePath: string, compilerItem: EGEInstaller.CompilerItem) {
 
         ege.printInfo(`EGE: Performing build with Visual Studio "${compilerItem.path}", file: "${filePath}"`);
         const cmdTool = compilerItem.getBuildCommandTool();
@@ -105,52 +102,31 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         const logMsg = `EGE: Perform build with command: ${buildCommand}`;
         ege.printWarning(logMsg);
 
-        const proc = childProcess.exec(buildCommand, {
-            encoding: 'buffer',
-            cwd: fileDir
-        }, (error, outMsg, errMsg) => {
-            if (error) {
-                console.log(error.cmd);
-                ege.printInfo(error.cmd as string);
-            }
-
-            const msg = outMsg || errMsg;
-
-            if (msg) {
-                /// 转码一下, 避免乱码
-                const gbkResult = iconv.decode(msg, 'gbk');
-                ege.printInfo(gbkResult);
-            }
+        const result = await asyncRunShellCommand(buildCommand, null, {
+            cwd: fileDir,
+            printMsg: 'gbk',
+            useWindowsConsole: true
         });
 
-        proc.on('close', (exitCode) => {
-            if (exitCode !== 0) {
-                vscode.window.showErrorMessage("EGE: Build Failed!");
+        if (result?.exitCode !== 0) {
+            vscode.window.showErrorMessage("EGE: Build Failed!");
 
-                if (!this.buildSuccessAtLeaseOnce) {
-                    /// 如果从未成功过, 那么每次都要重新选一下编译器.
-                    EGEInstaller.instance()?.getCompilerHandle()?.setCompiler(undefined);
-                }
-            } else {
-                vscode.window.showInformationMessage("EGE: Finish building!");
-                this.buildSuccessAtLeaseOnce = true;
-
-                ege.printInfo("Running " + exeName);
-                setTimeout(() => {
-                    /// dispose right now.
-                    const folderName = path.dirname(exeName);
-                    childProcess.exec(`cd ${folderName} && start cmd /C "${exeName}"`);
-                }, 500);
+            if (!this.buildSuccessAtLeaseOnce) {
+                /// 如果从未成功过, 那么每次都要重新选一下编译器.
+                EGEInstaller.instance()?.getCompilerHandle()?.setCompiler(undefined);
             }
-            ege.showOutputChannel(false);
+        } else {
+            vscode.window.showInformationMessage("EGE: Finish building!");
+            this.buildSuccessAtLeaseOnce = true;
 
-            // /// 5秒后关闭
-            // setTimeout(() => {
-            //     outputChannel.dispose();
-            //     this.outputChannel = null;
-            // }, 5000);
-
-        });
+            ege.printInfo("Running " + exeName);
+            setTimeout(() => {
+                /// dispose right now.
+                const folderName = path.dirname(exeName);
+                childProcess.exec(`cd ${folderName} && start cmd /C "${exeName}"`);
+            }, 500);
+        }
+        ege.showOutputChannel(false);
     }
 
     release() {

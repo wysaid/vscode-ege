@@ -42,32 +42,32 @@ export class SingleFileBuilderUnix extends SingleFileBuilder {
             if (mingw64) {
                 this.checkEnv = false;
             } else {
-                ege.showErrorBox(`[ege]: ${SingleFileBuilderUnix.mingw64Compiler} not found! Please install 'mingw-w64' first!`);
-                ege.printError(`Please see the install guide: <https://github.com/wysaid/xege>`);
+                ege.showErrorBox(`未找到 ${SingleFileBuilderUnix.mingw64Compiler}! 请先安装 'mingw-w64'!`, "OK");
+                ege.printError(`请参考安装说明: <https://github.com/wysaid/xege/blob/master/BUILD.md>`);
                 if (isMacOS()) {
-                    ege.printError(`On macOS, you can install it with homebrew: brew install mingw-w64`);
+                    ege.printError(`在 macOS 上, 考虑使用 homebrew 来安装: 'brew install mingw-w64'`);
                 }
                 return;
             }
         }
 
-        vscode.window.showInformationMessage("[ege]: Building...");
+        ege.printInfo("正在编译...", false);
         const activeFile = fileToRun || vscode.window.activeTextEditor?.document?.fileName;
         if (!activeFile || !fs.existsSync(activeFile)) {
-            ege.showErrorBox("[ege]: No active file!");
+            ege.showErrorBox(`${activeFile ? activeFile + " 不是一个正确的代码文件" : "未找到可编译的文件!"}`, "OK");
             return;
         }
 
         const cwd = path.dirname(activeFile);
         const cmd = this.buildCommand([activeFile]);
-        ege.printInfo(`[ege]: ${cmd}`);
+        ege.printInfo(`执行指令 ${cmd}`);
         const ret = await asyncRunShellCommand(cmd, null, {
             cwd: cwd,
             printMsg: true
         });
 
         if (ret?.exitCode !== 0) {
-            ege.showErrorBox("[ege]: Build failed!");
+            ege.showErrorBox("编译失败!", "OK");
             return;
         } else {
             /// 编译成功了, 运行一下.
@@ -86,9 +86,11 @@ export class SingleFileBuilderUnix extends SingleFileBuilder {
                 this.runFileTerminal.show();
                 this.runFileTerminal.sendText(`wine64 ${exeName}`);
             } else {
-                ege.showErrorBox("[ege]: wine64 not found! Please install 'wine64' command first!");
+                ege.showErrorBox("未找到 wine64! 请先安装 'wine64' !", "OK");
                 if (isMacOS()) {
-                    ege.printError(`On macOS, you can install it with homebrew: brew install wine-stable`);
+                    ege.printError(`在 macOS 上, 你可以通过 homebrew 来安装, 执行代码: 'brew install wine-stable'`);
+                } else if (isDebian()) {
+                    ege.printError(`在 Debian/Ubuntu 上, 你可以通过 apt 来安装, 执行代码: 'sudo apt install wine64'`);
                 }
             }
         }

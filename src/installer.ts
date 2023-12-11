@@ -94,16 +94,16 @@ export class EGEInstaller {
                         return;
                     }
                 } else {
-                    ege.showInfoBox("EGE: Install cancelled");
+                    ege.showInfoBox("EGE: 安装已取消!");
                 }
                 return;
             } else {
-                ege.printInfo("EGE: do builtin install on non-windows platforms...");
+                ege.printInfo("正在非 Windows 系统上执行编译...");
             }
         }
 
         if (this.progressHandle && this.progressHandle.progressInstance) {
-            ege.showErrorBox("EGE: Last progress not finished! Waiting... You can reload this window if you're waiting too long.");
+            ege.showErrorBox("安装流程执行中, 请耐心等待... 如果等待时间过长, 也可以考虑重启vscode再试试.", "OK");
             return;
         }
 
@@ -112,7 +112,7 @@ export class EGEInstaller {
         }
 
         if (!fs.existsSync) {
-            ege.showErrorBox("EGE: Create tmp directory failed!\n");
+            ege.showErrorBox("创建临时目录失败了, 难道是磁盘空间不足?", "哦");
             return false;
         }
 
@@ -131,10 +131,10 @@ export class EGEInstaller {
                 this.progressHandle?.updateProgress("Perform unzipping " + this.egeDownloadedZipFile);
                 if (await this.performUnzip()) {
                     this.progressHandle?.resolve();
-                    vscode.window.showInformationMessage("EGE: Installer prepared, please choose a compiler!");
+                    ege.showInfoBox("EGE: 安装完成, 请选择一个你想用的编译器: ");
                     await this.performCompilerInstallation();
                 } else {
-                    vscode.window.showErrorMessage(`EGE: unzip ${this.egeDownloadedZipFile} failed!`);
+                    ege.showErrorBox(`解压文件 ${this.egeDownloadedZipFile} 失败!`);
                     fs.removeSync(this.egeInstallerDir);
                     if (this.progressHandle) {
                         this.progressHandle.reject();
@@ -142,7 +142,12 @@ export class EGEInstaller {
                 }
             } else {
                 fs.mkdirpSync(this.egeInstallerDir);
-                console.assert(fs.existsSync(this.egeBundleDir), "EGE: builtin bundle not found!");
+                if (!fs.existsSync(this.egeBundleDir)) {
+                    ege.showErrorBox("内置版本的 ege 找不到了, 可能是插件损坏, 考虑重新安装 vscode 插件.");
+                    throw new Error("EGE: builtin bundle not found!");
+                    return;
+                }
+
                 fs.copySync(this.egeBundleDir, this.egeInstallerDir, { overwrite: true });
                 if (isWindows()) {
                     await this.performCompilerInstallation();
@@ -160,19 +165,19 @@ export class EGEInstaller {
 
             if (!exists) {
                 if (!this.egeDownloadedZipFile) {
-                    vscode.window.showErrorMessage("EGE: Get latest ege version failed! Make sure you're online!");
+                    vscode.window.showErrorMessage("获取最新版本的 EGE 版本号失败, 你是不是断网了?", "OK");
                     this.progressHandle?.reject();
                     return;
                 }
 
-                this.progressHandle?.updateProgress("Downloading " + this.egeDownloadUrl);
+                this.progressHandle?.updateProgress("正在下载 " + this.egeDownloadUrl);
                 if (await this.performDownload()) {
                     await nextStep();
                 } else {
-                    console.error("Error downloading!");
+                    console.error("下载失败!");
                 }
             } else {
-                vscode.window.showInformationMessage("EGE is already downloaded, skip downloading");
+                ege.printWarning("EGE 已经下载过了, 跳过...");
                 await nextStep();
             }
         } else {
@@ -217,7 +222,7 @@ export class EGEInstaller {
                 vscode.window.showInformationMessage("EGE: Install finished!");
             });
         } else {
-            ege.printError("EGE: No compiler choosed.");
+            ege.printError("未找到合适的编译器!");
         }
     }
 

@@ -53,23 +53,27 @@ function activate(context: vscode.ExtensionContext) {
 
 			if (egeInstance) {
 				if (!utils.validateInstallationOfDirectory(egeInstance.egeInstallerDir)) {
-					vscode.window.showWarningMessage("EGE: No installation found, performing initialization. Please try again...");
+					ege.showWarningBox(`EGE没有初始化过, 正在执行初始化, 初始化完毕之后请重试...`, "哦");
 					/// 没有执行过安装, 执行一次.
 					egeInstance.egeDownloadedZipFile = undefined;
 					if (await egeInstance.performInstall()) {
-						buildCurrentActiveFile(fileToRun);
+						await buildCurrentActiveFile(fileToRun);
+					}
+
+					if (!utils.validateInstallationOfDirectory(egeInstance.egeInstallerDir)) {
+						ege.printError(`解压文件失败!!! 请检查网络连接, 也可以手动下载: ${egeInstance.egeDownloadUrl} 并解压到 ${egeInstance.egeInstallerDir}`);
 					} else {
-						ege.printError("EGE: perform unzip failed!!");
+						await buildCurrentActiveFile(fileToRun);
 					}
 				} else {
-					buildCurrentActiveFile(fileToRun);
+					await buildCurrentActiveFile(fileToRun);
 				}
 			}
 		} else {
 			if (fileToRun) {
-				vscode.window.showErrorMessage("EGE: Failed to to build: Can not find file " + fileToRun);
+				ege.showErrorBox("编译失败: 找不到文件 " + fileToRun);
 			} else {
-				vscode.window.showErrorMessage("EGE: Failed to to build: No active file selected!");
+				ege.showErrorBox("编译失败: 未选中任何文件!");
 			}
 		}
 	}));

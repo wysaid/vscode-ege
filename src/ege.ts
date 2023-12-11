@@ -33,7 +33,7 @@ export namespace ege {
 
     export function printInfo(msg: string, preserveFocus?: boolean) {
         const channel = getOutputChannel();
-        channel.appendLine(`[ege]: ${msg}`);
+        channel.appendLine(`${msgPrefix} ${msg}`);
         if (preserveFocus !== undefined) {
             channel.show(preserveFocus);
         }
@@ -55,15 +55,23 @@ export namespace ege {
      * @description 在右下角显示一段信息
      */
     export function showInfoBox(info: string, ...items: string[]): Thenable<string | undefined> {
-        printInfo(msgPrefix + info);
+        printInfo(info);
         return vscode.window.showInformationMessage(msgPrefix + info, ...items);
+    }
+
+    /**
+     * @description 在右下角显示一段警告信息
+     */
+    export function showWarningBox(warning: string, ...items: string[]): Thenable<string | undefined> {
+        printInfo(warning);
+        return vscode.window.showWarningMessage(msgPrefix + warning, ...items);
     }
 
     /**
      * @description 在右下角显示一段错误信息
      */
     export function showErrorBox(error: string, ...items: string[]): Thenable<string | undefined> {
-        printError(msgPrefix + error);
+        printInfo(error);
         return vscode.window.showErrorMessage(msgPrefix + error, ...items);
     }
 }

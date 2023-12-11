@@ -187,7 +187,7 @@ function createShellRunnerInfo(command: string, args?: string[] | null, shellOpt
         };
 
     } else {
-        ege.showErrorBox("Unsupported platform!");
+        ege.showErrorBox(`暂时不支持的平台: ${os.platform()}`);
     }
 
     return result;

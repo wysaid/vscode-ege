@@ -31,14 +31,14 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
             const comp = egeInstaller.getCompilerHandle();
 
             if (!comp.selectedCompiler) {
-                ege.printInfo("EGE: Looking for compiler...");
+                ege.printInfo("正在查找可用编译器...");
                 const c = await comp.chooseCompilerByUser();
                 comp.setCompiler(c);
                 /// eslint 会在非 windows 系统里面判定 comp.selectedCompiler 永远为 null, 所以这里使用 as any.
                 const compilerItem: CompilerItem = comp.selectedCompiler as any;
                 if (compilerItem) {
-                    ege.printInfo("EGE: Choosed compiler " + compilerItem.path);
-                    ege.printInfo("EGE: Performing build...");
+                    ege.printInfo("选择编译器 " + compilerItem.path);
+                    ege.printInfo("正在编译...", false);
                     await this.buildCurrentActiveFile(activeFile);
                 }
             } else {
@@ -49,7 +49,7 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
                 }
             }
         } else {
-            vscode.window.showErrorMessage("EGE: No active file!");
+            ege.printError("未找到代码文件!");
         }
     }
 
@@ -99,7 +99,7 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
 
         const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd ${extraIncludeCommand} /std:${cppStandard} /EHsc "${filePath}" /link ${extraLibsCommand}`;
 
-        const logMsg = `EGE: Perform build with command: ${buildCommand}`;
+        const logMsg = `执行编译指令: ${buildCommand}`;
         ege.printWarning(logMsg);
 
         const result = await asyncRunShellCommand(buildCommand, null, {
@@ -109,17 +109,17 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         });
 
         if (result?.exitCode !== 0) {
-            ege.showErrorBox("EGE: Build Failed!");
+            ege.showErrorBox("编译失败!");
 
             if (!this.buildSuccessAtLeaseOnce) {
                 /// 如果从未成功过, 那么每次都要重新选一下编译器.
                 EGEInstaller.instance()?.getCompilerHandle()?.setCompiler(undefined);
             }
         } else {
-            vscode.window.showInformationMessage("EGE: Finish building!");
+            ege.printInfo("编译结束!");
             this.buildSuccessAtLeaseOnce = true;
 
-            ege.printInfo("Running " + exeName);
+            ege.printInfo("可执行文件: " + exeName);
             setTimeout(() => {
                 /// dispose right now.
                 const folderName = path.dirname(exeName);

@@ -9,7 +9,7 @@ import { EGEInstaller } from './installer';
 import path = require('path');
 import iconv = require('iconv-lite')
 import fs = require('fs-extra');
-import { SingleFileBuilder } from './SingleFileBuilder';
+import { SingleFileBuilder, getCppShowConsoleDefine } from './SingleFileBuilder';
 import { ege } from './ege';
 import { asyncRunShellCommand } from './utils';
 import { CompilerItem } from './compilers';
@@ -19,6 +19,7 @@ import { CompilerItem } from './compilers';
 export class SingleFileBuilderWin32 extends SingleFileBuilder {
 
     buildSuccessAtLeaseOnce = false;
+    runFileTerminal: vscode.Terminal | undefined;
 
     constructor() {
         super();
@@ -97,7 +98,11 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
             });
         }
 
-        const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd ${extraIncludeCommand} /std:${cppStandard} /EHsc "${filePath}" /link ${extraLibsCommand}`;
+        let defineConsole = getCppShowConsoleDefine(filePath) ?? "";
+        if (defineConsole.length > 0) {
+            defineConsole = `/D${defineConsole}`;
+        }
+        const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd ${defineConsole} ${extraIncludeCommand} /std:${cppStandard} /EHsc "${filePath}" /link ${extraLibsCommand}`;
 
         const logMsg = `执行编译指令: ${buildCommand}`;
         ege.printWarning(logMsg);
@@ -120,11 +125,23 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
             this.buildSuccessAtLeaseOnce = true;
 
             ege.printInfo("可执行文件: " + exeName);
-            setTimeout(() => {
-                /// dispose right now.
-                const folderName = path.dirname(exeName);
-                childProcess.exec(`cd ${folderName} && start cmd /C "${exeName}"`);
-            }, 500);
+            /// 使用 vscode 自带的 terminal 来执行.
+
+
+            /// dispose right now.                
+            if (this.runFileTerminal && this.runFileTerminal.exitStatus === undefined) {
+                this.runFileTerminal.dispose();
+            }
+
+            const exeBaseNameNoSuffix = path.basename(filePath, path.extname(filePath));
+            const exeBaseName = exeBaseNameNoSuffix + ".exe";
+            this.runFileTerminal = vscode.window.createTerminal({
+                name: exeBaseNameNoSuffix,
+                cwd: path.dirname(filePath),
+                shellPath: 'cmd.exe',
+                shellArgs: ['/k', exeBaseName],
+            });
+            this.runFileTerminal.show();
         }
         ege.showOutputChannel(false);
     }

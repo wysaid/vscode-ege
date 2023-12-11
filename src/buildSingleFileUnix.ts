@@ -3,7 +3,7 @@
  * Date: 20231210
  */
 
-import { SingleFileBuilder } from "./SingleFileBuilder";
+import { SingleFileBuilder, getCppShowConsoleDefine } from "./SingleFileBuilder";
 import { ege } from "./ege";
 import { asyncRunShellCommand, isDebian, isMacOS, whereis } from "./utils";
 import * as vscode from 'vscode';
@@ -33,7 +33,11 @@ export class SingleFileBuilderUnix extends SingleFileBuilder {
 
     buildCommand(args: string[]) {
         const argStr = args.length > 1 ? args.map(arg => `"${arg}"`).join(" ").trim() : args[0].trim();
-        return `${SingleFileBuilderUnix.mingw64Compiler} -D_FORTIFY_SOURCE=0 ${argStr} -lgraphics64 -lgdiplus -lgdi32 -limm32 -lmsimg32 -lole32 -loleaut32 -lwinmm -luuid -mwindows -static -I"${EGEInstaller.instance().egeInstallerDir}/include" -L"${EGEInstaller.instance().egeInstallerDir}/lib/${this.osLibDir}" -o ${path.basename(argStr, path.extname(argStr))}.exe`;
+        let defineConsole = getCppShowConsoleDefine(argStr) ?? "";
+        if (defineConsole.length > 0) {
+            defineConsole = `-D${defineConsole}`;
+        }
+        return `${SingleFileBuilderUnix.mingw64Compiler} -D_FORTIFY_SOURCE=0 ${argStr} -lgraphics64 -lgdiplus -lgdi32 -limm32 -lmsimg32 -lole32 -loleaut32 -lwinmm -luuid -mwindows -static ${defineConsole} -I"${EGEInstaller.instance().egeInstallerDir}/include" -L"${EGEInstaller.instance().egeInstallerDir}/lib/${this.osLibDir}" -o ${path.basename(argStr, path.extname(argStr))}.exe`;
     }
 
     async buildCurrentActiveFile(fileToRun: string): Promise<void> {

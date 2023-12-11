@@ -4,6 +4,12 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.2.2
+
+- 弹窗提示翻译为中文.
+- Windows 版的单文件运行功能, 默认依附于 vscode 的 terminal 运行.
+- 当检查到代码中存在 cin/cout/printf/scanf 之类的标准输入输出的时候, 给加上 SHOW_CONSOLE 参数
+
 ## 0.2.1
 
 - 单文件编译支持 debian/ubuntu, 同时内置对应的静态库.

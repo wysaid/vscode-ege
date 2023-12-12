@@ -8,6 +8,7 @@ import { buildCurrentActiveFile, unregisterSingleFileBuilder } from './buildSing
 
 import utils = require('./utils')
 import { ege } from './ege';
+import { setupProject } from './setupProject';
 
 function activate(context: vscode.ExtensionContext) {
 
@@ -17,20 +18,20 @@ function activate(context: vscode.ExtensionContext) {
 
 	EGEInstaller.registerContext(context);
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.setupProject', () => {
-		vscode.window.showInformationMessage("EGE: Setup-project not implemented. Do it later...\n");
+	context.subscriptions.push(vscode.commands.registerCommand('ege.setupProject', async (uri?: vscode.Uri) => {
+		await setupProject(uri);
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setupGlobal', () => {
 		EGEInstaller.instance().performInstall();
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', async (runPath) => {
+	context.subscriptions.push(vscode.commands.registerCommand('ege.buildAndRunCurrentFile', async (runPath?: vscode.Uri) => {
 		/// Watch the file and trigger build when changed.
-		let fileToRun = runPath;
+		let fileToRun = runPath?.fsPath;
 		if (!fileToRun || !fs.existsSync(fileToRun)) {
 			fileToRun = vscode.window.activeTextEditor?.document?.fileName;
-			if (!fs.existsSync(fileToRun)) {
+			if (!fileToRun || !fs.existsSync(fileToRun)) {
 				/// May focus tasks.
 				const editors = vscode.window.visibleTextEditors;
 				if (editors && editors.length > 0) {
@@ -46,11 +47,10 @@ function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		const egeInstance = EGEInstaller.instance();
-
-		if (fs.existsSync(fileToRun)) {
+		if (fileToRun && fs.existsSync(fileToRun)) {
 			/// perform build and run
 
+			const egeInstance = EGEInstaller.instance();
 			if (egeInstance) {
 				if (!utils.validateInstallationOfDirectory(egeInstance.egeInstallerDir)) {
 					ege.showWarningBox(`EGE没有初始化过, 正在执行初始化, 初始化完毕之后请重试...`, "哦");

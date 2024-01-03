@@ -20,7 +20,11 @@ set(MY_TARGET_NAME ege-demo)
 
 project(${MY_PROJECT_NAME} LANGUAGES CXX)
 
-add_executable(${MY_TARGET_NAME} demo.cpp)
+file(GLOB DEMO_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+message("DEMO_SOURCE: ${DEMO_SOURCE}")
+
+add_executable(${MY_TARGET_NAME} ${DEMO_SOURCE})
 
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
 

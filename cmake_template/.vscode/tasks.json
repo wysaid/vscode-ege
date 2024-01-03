@@ -10,7 +10,7 @@
             "args": [
                 "-l",
                 "-c",
-                "mkdir -p build && cd build && cmake .. && make -j 4"
+                "mkdir -p build && cd build && cmake .. && make -j$(nproc)"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

@@ -18,8 +18,8 @@ function activate(context: vscode.ExtensionContext) {
 
 	EGEInstaller.registerContext(context);
 
-	context.subscriptions.push(vscode.commands.registerCommand('ege.setupProject', async (uri?: vscode.Uri) => {
-		await setupProject(uri);
+	context.subscriptions.push(vscode.commands.registerCommand('ege.setupProject', async () => {
+		setupProject();
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('ege.setupGlobal', () => {

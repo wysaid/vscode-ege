@@ -4,6 +4,10 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+- 0.3.0
+
+- 解决 CMake 项目生成的问题, 内置一个 CMake 的模板.
+
 ## 0.2.2
 
 - 弹窗提示翻译为中文.

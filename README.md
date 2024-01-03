@@ -6,6 +6,8 @@ A VSCode plugin to help the configuration of [ege](https://xege.org). Enjoy it!
 
 - Generate `EGE Projects` with single click
 - Build and run single cpp files with EGE support.(`graphics.h`)
+- Add EGE CMake Project Template for `C/C++` source.
+- Support MacOS/Linux (By `wine`)
 
 ## Deps
 

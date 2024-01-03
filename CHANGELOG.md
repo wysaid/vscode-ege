@@ -4,7 +4,11 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-- 0.3.0
+## 0.3.1
+
+- 解决 CMake 项目生成在 Windows 下的一些问题. 已处于可用状态.
+
+## 0.3.0
 
 - 解决 CMake 项目生成的问题, 内置一个 CMake 的模板.
 

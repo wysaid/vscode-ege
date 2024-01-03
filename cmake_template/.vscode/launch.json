@@ -5,28 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Debug (Windows)",
+            "name": "Launch Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/ege-demo.exe",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
-        },
-        {
-            "name": "Launch Debug (Mac/Linux)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "/bin/bash",
-            "args": [
-                "-c",
-                "echo Run ${workspaceFolder}/build/ege-demo.exe done."
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "lldb",
-            "preLaunchTask": "Run Project",
+            "osx": {
+                "program": "/bin/bash",
+                "args": [
+                    "-c",
+                    "echo Run ${workspaceFolder}/build/ege-demo.exe done."
+                ],
+                "preLaunchTask": "Run Project",
+                "MIMode": "lldb"
+            }
         }
     ]
 }

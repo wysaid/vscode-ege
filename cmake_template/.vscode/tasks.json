@@ -10,7 +10,7 @@
             "args": [
                 "-l",
                 "-c",
-                "mkdir -p build && cd build && cmake .. && make -j$(nproc)"
+                "mkdir -p build && cd build && cmake .. && cmake --build . --parallel $(nproc)"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -25,7 +25,7 @@
             "args": [
                 "-l",
                 "-c",
-                "cd build && make -j 4"
+                "(test -d build || (mkdir -p build && cd build && cmake ..) ); cmake --build build --parallel $(nproc)"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -47,7 +47,32 @@
             "problemMatcher": "$gcc",
             "dependsOn": [
                 "Build Project"
-            ]
+            ],
+            "windows": {
+                "command": "cmd",
+                "args": [
+                    "/c",
+                    "ege-demo.exe"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/build/Debug"
+                }
+            }
+        },
+        {
+            "label": "Clean Project",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-l",
+                "-c",
+                "git clean -fdx build || rm -rf build"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": "$gcc"
         }
     ]
 }

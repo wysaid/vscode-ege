@@ -17,7 +17,7 @@
                 "program": "/bin/bash",
                 "args": [
                     "-c",
-                    "echo Run ${workspaceFolder}/build/ege-demo.exe done."
+                    "echo Run ${workspaceFolder}/build/Debug/ege-demo.exe done."
                 ],
                 "preLaunchTask": "Run Project"
             }

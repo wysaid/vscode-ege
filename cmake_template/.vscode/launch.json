@@ -6,21 +6,20 @@
     "configurations": [
         {
             "name": "Launch Debug",
-            "type": "cppdbg",
+            "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/ege-demo.exe",
+            "program": "${workspaceFolder}/build/Debug/ege-demo.exe",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],
-            "externalConsole": false,
+            "console": "integratedTerminal",
             "osx": {
                 "program": "/bin/bash",
                 "args": [
                     "-c",
                     "echo Run ${workspaceFolder}/build/ege-demo.exe done."
                 ],
-                "preLaunchTask": "Run Project",
-                "MIMode": "lldb"
+                "preLaunchTask": "Run Project"
             }
         }
     ]

@@ -53,7 +53,7 @@
                 }
             }
         },
-		{
+        {
             "label": "Build Project (Release)",
             "type": "shell",
             "command": "bash",
@@ -92,7 +92,7 @@
             ],
             "dependsOrder": "sequence",
         },
-		{
+        {
             "label": "Load And Build Project (Release)",
             "type": "shell",
             "command": "echo",
@@ -132,7 +132,7 @@
                 }
             }
         },
-		{
+        {
             "label": "Run Project (Release)",
             "type": "shell",
             "command": "wine64",

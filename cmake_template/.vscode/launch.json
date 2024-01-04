@@ -13,14 +13,40 @@
             "cwd": "${workspaceFolder}/build",
             "environment": [],
             "console": "integratedTerminal",
+            "preLaunchTask": "Run Project (Debug)",
+
             "osx": {
                 "program": "/bin/bash",
                 "args": [
                     "-c",
-                    "echo Run ${workspaceFolder}/build/ege-demo.exe done."
+                    "echo Run ${workspaceFolder}/build/Debug/ege-demo.exe done."
                 ],
-                "preLaunchTask": "Run Project"
-            }
+            },
+            "windows": {
+                "preLaunchTask": "Build Project (Debug)"
+            },
+        },
+        {
+            "name": "Launch Release",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/ege-demo.exe",
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "Run Project (Release)",
+
+            "osx": {
+                "program": "/bin/bash",
+                "args": [
+                    "-c",
+                    "echo Run ${workspaceFolder}/build/Release/ege-demo.exe done."
+                ],
+            },
+            "windows": {
+                "preLaunchTask": "Build Project (Release)"
+            },
         }
     ]
 }

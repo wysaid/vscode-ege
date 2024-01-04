@@ -4,6 +4,10 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.3.4
+
+- 优化 launch tasks.
+
 ## 0.3.3
 
 - 解决 windows 下补全的 `tasks` 会依赖 `git-bash` 的问题, 改用 cmd 指令重写

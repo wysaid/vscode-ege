@@ -29,7 +29,7 @@
             }
         },
         {
-            "label": "Build Project",
+            "label": "Build Project (Debug)",
             "type": "shell",
             "command": "bash",
             "args": [
@@ -53,22 +53,61 @@
                 }
             }
         },
+		{
+            "label": "Build Project (Release)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-l",
+                "-c",
+                "(test -d build || (mkdir -p build && pushd . && cd build && cmake .. && popd) ); cmake --build build --config Release --parallel $(nproc)"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": "$gcc",
+            "windows": {
+                "command": "cmd",
+                "args": [
+                    "/c",
+                    "(if not exist \"build\" (mkdir build && cd build && cmake ..) ) & cmake --build \"${workspaceFolder}/build\" --config Release --parallel %NUMBER_OF_PROCESSORS%"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                }
+            }
+        },
         {
-            "label": "Load And Build Project",
+            "label": "Load And Build Project (Debug)",
             "type": "shell",
             "command": "echo",
             "args": [
-                "Load And Build Project - Done",
+                "Load And Build Project (Debug) - Done",
             ],
             "group": "build",
             "dependsOn": [
                 "Load Project",
-                "Build Project"
+                "Build Project (Debug)"
+            ],
+            "dependsOrder": "sequence",
+        },
+		{
+            "label": "Load And Build Project (Release)",
+            "type": "shell",
+            "command": "echo",
+            "args": [
+                "Load And Build Project (Release) - Done",
+            ],
+            "group": "build",
+            "dependsOn": [
+                "Load Project",
+                "Build Project (Release)"
             ],
             "dependsOrder": "sequence",
         },
         {
-            "label": "Run Project",
+            "label": "Run Project (Debug)",
             "type": "shell",
             "command": "wine64",
             "args": [
@@ -80,7 +119,7 @@
             "group": "build",
             "problemMatcher": "$gcc",
             "dependsOn": [
-                "Build Project"
+                "Build Project (Debug)"
             ],
             "windows": {
                 "command": "cmd",
@@ -90,6 +129,32 @@
                 ],
                 "options": {
                     "cwd": "${workspaceFolder}/build/Debug"
+                }
+            }
+        },
+		{
+            "label": "Run Project (Release)",
+            "type": "shell",
+            "command": "wine64",
+            "args": [
+                "ege-demo.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "group": "build",
+            "problemMatcher": "$gcc",
+            "dependsOn": [
+                "Build Project (Release)"
+            ],
+            "windows": {
+                "command": "cmd",
+                "args": [
+                    "/c",
+                    "ege-demo.exe"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/build/Release"
                 }
             }
         },

@@ -102,7 +102,13 @@ export class SingleFileBuilderWin32 extends SingleFileBuilder {
         if (defineConsole.length > 0) {
             defineConsole = `/D${defineConsole}`;
         }
-        const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd ${defineConsole} ${extraIncludeCommand} /std:${cppStandard} /EHsc "${filePath}" /link ${extraLibsCommand}`;
+
+        let sourceCharset = 'utf-8';        // The source files use utf-8 as the default charset.
+        let sourceCharsetCommand = '/source-charset:' + sourceCharset;
+        let executionCharset = '';          // ANSI (Unuse)
+        let executionCharsetCommand = '';   // '/execution-charset:' + executionCharset;
+
+        const buildCommand = `call "${cmdTool}" ${arch} && cl /nodefaultlib:"MSVCRT" /MDd ${defineConsole} ${extraIncludeCommand} /std:${cppStandard} ${sourceCharsetCommand} ${executionCharsetCommand} /EHsc "${filePath}" /link ${extraLibsCommand}`;
 
         const logMsg = `执行编译指令: ${buildCommand}`;
         ege.printWarning(logMsg);

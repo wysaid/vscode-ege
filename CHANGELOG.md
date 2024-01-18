@@ -4,6 +4,11 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.3.5
+
+- 优化内置ege编码方式, 避免警告.
+- 优化编译文件的 encoding, 支持 utf8 格式的源文件, 避免中文乱码
+
 ## 0.3.4
 
 - 优化 launch tasks.

@@ -31,7 +31,7 @@ target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 # 设置静态库搜索路径
 
 if (MSVC)
-    target_compile_options(${MY_TARGET_NAME} PRIVATE /utf-8 /MP /std:c++17 /D_USE_MATH_DEFINES /D__STDC_LIMIT_MACROS "$<$<CONFIG:DEBUG>:/DDEBUG>" "$<$<CONFIG:RELEASE>:/DNDEBUG>" "$<$<CONFIG:RELWITHDEBINFO>:/DNDEBUG>" "$<$<CONFIG:MINSIZEREL>:/DNDEBUG>" "$<IF:$<CONFIG:Debug>,/MDd,/MD>")
+    target_compile_options(${MY_TARGET_NAME} PRIVATE /source-charset:utf-8 /MP /std:c++17 /D_USE_MATH_DEFINES /D__STDC_LIMIT_MACROS "$<$<CONFIG:DEBUG>:/DDEBUG>" "$<$<CONFIG:RELEASE>:/DNDEBUG>" "$<$<CONFIG:RELWITHDEBINFO>:/DNDEBUG>" "$<$<CONFIG:MINSIZEREL>:/DNDEBUG>" "$<IF:$<CONFIG:Debug>,/MDd,/MD>")
 
     if (MSVC_VERSION GREATER_EQUAL 1920)
         # vs2019 以上, 静态库是兼容的.
@@ -56,7 +56,7 @@ if (MSVC)
         endif()
     else ()
         message(FATAL_ERROR "你的 MSVC 版本太老了, 请使用 vs2015 或更新版本的 MSVC 编译器. 与时俱进吧, 不要一直使用十年前的编译器.")
-    endif ()    
+    endif ()
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")

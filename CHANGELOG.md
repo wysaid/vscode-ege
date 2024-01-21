@@ -4,6 +4,10 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.3.6
+
+- 修正：使用 CMake 构建项目，运行时中文乱码(源文件字符集 UTF-8，系统字符集 ANSI，Windows MSVC)
+
 ## 0.3.5
 
 - 优化内置ege编码方式, 避免警告.

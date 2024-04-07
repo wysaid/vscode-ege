@@ -21,7 +21,7 @@
                 "command": "cmd",
                 "args": [
                     "/c",
-                    "(if not exist \"build\" (mkdir build && cd build && cmake ..) ) & cmake \"${workspaceFolder}/build\""
+                    "(if not exist build (mkdir build) ) & (cd build && cmake ..)"
                 ],
                 "options": {
                     "cwd": "${workspaceFolder}"

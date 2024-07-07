@@ -42,7 +42,6 @@ export class EGEInstaller {
     compilerHandle?: compilers.Compilers;
 
     constructor(context: vscode.ExtensionContext) {
-        //@type {vscode.ExtensionContext}
         this.pluginContext = context;
         this.egeTempDir = path.join(os.tmpdir(), this.pluginContext.extension.id);
         console.log("The ege plugin storage path is: " + this.egeTempDir);

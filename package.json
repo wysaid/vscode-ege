@@ -2,7 +2,7 @@
 	"name": "ege",
 	"displayName": "ege",
 	"description": "Auto configuration for ege (https://xege.org)",
-	"version": "0.3.8",
+	"version": "0.4.1",
 	"icon": "images/logo.png",
 	"publisher": "wysaid",
 	"repository": {
@@ -11,7 +11,7 @@
 	},
 	"homepage": "https://github.com/wysaid/vscode-ege",
 	"engines": {
-		"vscode": "^1.61.0"
+		"vscode": "^1.63.0"
 	},
 	"categories": [
 		"Education",

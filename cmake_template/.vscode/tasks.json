@@ -109,9 +109,11 @@
         {
             "label": "Run Project (Debug)",
             "type": "shell",
-            "command": "wine64",
+            "command": "bash",
             "args": [
-                "ege-demo.exe"
+                "-l",
+                "-c",
+                "if command -v wine64; then wine64 ege-demo.exe; else wine ege-demo.exe; fi"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/build"
@@ -135,9 +137,11 @@
         {
             "label": "Run Project (Release)",
             "type": "shell",
-            "command": "wine64",
+            "command": "bash",
             "args": [
-                "ege-demo.exe"
+                "-l",
+                "-c",
+                "if command -v wine64; then wine64 ege-demo.exe; else wine ege-demo.exe; fi"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/build"

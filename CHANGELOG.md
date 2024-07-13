@@ -4,6 +4,14 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.4.5
+
+- update builtin ege.
+
+## 0.4.3
+
+- update builtin ege.
+
 ## 0.4.2
 
 - fix vscode task error.

@@ -30,8 +30,7 @@ target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 
 # 设置静态库搜索路径
 
-if (MSVC)
-    
+if (MSVC)    
     # 设置 MSVC 编译选项, 当版本大于 vs2019 时, 使用 c++17 标准.
     set(CPP_COMPILE_OPTIONS "/std:c++17")
 
@@ -90,8 +89,10 @@ endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     if (CMAKE_HOST_APPLE)
         set(osLibDir "macOS")
-    else ()
+    elseif (CMAKE_HOST_UNIX)
         set(osLibDir "mingw-w64-debian")
+    elseif (MINGW)
+        set(osLibDir "mingw-w64/mingw-w64-gcc-8.1.0-x86_64")
     endif ()
     target_compile_options(${MY_TARGET_NAME} PRIVATE -D_FORTIFY_SOURCE=0)
     target_link_options(${MY_TARGET_NAME} PRIVATE -mwindows -static -static-libgcc -static-libstdc++)

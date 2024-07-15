@@ -65,8 +65,8 @@ export class EGEInstaller {
             if (isWindows()) {
                 const quickPicks = [
                     {
-                        label: "Use builtin EGE(20.08)",
-                        description: "使用本插件内置的EGE(20.08)完成安装 (推荐)",
+                        label: "Use builtin EGE(24.04)",
+                        description: "使用本插件内置的EGE(24.04)完成安装 (推荐)",
                         picked: true
                     },
                     {

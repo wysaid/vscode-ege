@@ -35,7 +35,7 @@
             "args": [
                 "-l",
                 "-c",
-                "(test -d build || (mkdir -p build && pushd . && cd build && cmake .. && popd) ); cmake --build build --parallel $(nproc)"
+                "(test -d build || (mkdir -p build && pushd . && cd build && cmake .. && popd) ); cmake --build build --parallel $(getconf _NPROCESSORS_ONLN)"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -60,7 +60,7 @@
             "args": [
                 "-l",
                 "-c",
-                "(test -d build || (mkdir -p build && pushd . && cd build && cmake .. && popd) ); cmake --build build --config Release --parallel $(nproc)"
+                "(test -d build || (mkdir -p build && pushd . && cd build && cmake .. && popd) ); cmake --build build --config Release --parallel $(getconf _NPROCESSORS_ONLN)"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

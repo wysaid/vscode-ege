@@ -4,6 +4,18 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.4.11
+
+- fix issue: <https://github.com/wysaid/vscode-ege/issues/6>, thanks to @NCC79601 for reporting.
+
+## 0.4.10
+
+- revert `0.4.9`
+
+## 0.4.9
+
+- 更新 ege libs, 同时支持 /MT 和 /MD 两种运行时库.
+
 ## 0.4.8
 
 - 优化 vscode task.

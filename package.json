@@ -2,7 +2,7 @@
 	"name": "ege",
 	"displayName": "ege",
 	"description": "Auto configuration for ege (https://xege.org)",
-	"version": "0.4.11",
+	"version": "0.4.12",
 	"icon": "images/logo.png",
 	"publisher": "wysaid",
 	"repository": {

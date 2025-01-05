@@ -4,6 +4,10 @@ All notable changes to the "ege" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.4.13
+
+- fix compile error on macOS Sequoia with latest mingw-w64 (undefined reference to `_setjmp`).
+
 ## 0.4.11
 
 - fix issue: <https://github.com/wysaid/vscode-ege/issues/6>, thanks to @NCC79601 for reporting.
